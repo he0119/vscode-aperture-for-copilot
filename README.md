@@ -23,7 +23,7 @@
 
    ```json
    {
-     "aperture-copilot.baseUrl": "https://ai.long-antares.ts.net/v1"
+     "aperture-copilot.baseUrl": "https://ai.long-antares.ts.net"
    }
    ```
 
@@ -33,7 +33,7 @@ API key 是可选的。如果你的 Aperture 部署要求鉴权，运行 `Apertu
 
 ## 功能
 
-- 自动读取 `${baseUrl}/models`，并按模型 ID 去重。
+- 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。
 - 支持通过 `aperture-copilot.models` 手动定义模型。
 - 将 OpenAI-compatible 的流式 chat completions 输出到 Copilot Chat。
 - 对配置为 thinking 的模型，把 `reasoning_content` 输出为 Copilot thinking part。
@@ -44,7 +44,7 @@ API key 是可选的。如果你的 Aperture 部署要求鉴权，运行 `Apertu
 
 ```json
 {
-  "aperture-copilot.baseUrl": "https://ai.long-antares.ts.net/v1",
+  "aperture-copilot.baseUrl": "https://ai.long-antares.ts.net",
   "aperture-copilot.modelSource": "auto",
   "aperture-copilot.enabledModelIds": [],
   "aperture-copilot.thinkingModelIds": [

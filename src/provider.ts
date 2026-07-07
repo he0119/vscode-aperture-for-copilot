@@ -88,7 +88,7 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 		const current = getConfiguredBaseUrl() ?? '';
 		const value = await vscode.window.showInputBox({
 			title: 'Aperture Base URL',
-			prompt: 'Enter an OpenAI-compatible base URL. Bare origins are normalized to /v1.',
+			prompt: 'Enter the Aperture instance URL. The extension appends /v1 for API requests.',
 			value: current,
 			ignoreFocusOut: true,
 			validateInput: (input) => validateBaseUrlInput(input),
@@ -327,7 +327,10 @@ function validateBaseUrlInput(input: string): string | undefined {
 		return undefined;
 	}
 	try {
-		normalizeBaseUrl(input);
+		const normalized = normalizeBaseUrl(input);
+		if (normalized && new URL(normalized).pathname.replace(/\/+$/u, '').endsWith('/v1')) {
+			return '请输入 Aperture 实例地址，不要包含 /v1。';
+		}
 		return undefined;
 	} catch (error) {
 		return error instanceof Error ? error.message : 'Invalid URL';

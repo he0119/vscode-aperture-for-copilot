@@ -77,7 +77,7 @@
         "aperture-copilot.baseUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "OpenAI-compatible Aperture base URL. Bare origins are normalized to `/v1`, for example `https://ai.long-antares.ts.net` becomes `https://ai.long-antares.ts.net/v1`."
+          "markdownDescription": "Aperture instance URL. The extension appends `/v1` when calling OpenAI-compatible API endpoints. For example, set `https://ai.long-antares.ts.net`, not `https://ai.long-antares.ts.net/v1`."
         },
         "aperture-copilot.modelSource": {
           "type": "string",
@@ -87,7 +87,7 @@
             "manual"
           ],
           "enumDescriptions": [
-            "Fetch `${baseUrl}/models` and expose the deduplicated result.",
+            "Fetch `${baseUrl}/v1/models` and expose the deduplicated result.",
             "Use only the models configured in `aperture-copilot.models`."
           ],
           "description": "Where the extension should get model definitions."

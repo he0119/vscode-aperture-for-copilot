@@ -12,11 +12,12 @@ export function normalizeBaseUrl(raw: string | undefined): string | undefined {
 	url.search = '';
 
 	const path = url.pathname.replace(/\/+$/u, '');
-	url.pathname = path === '' ? '/v1' : path;
+	url.pathname = path || '/';
 
 	return url.toString().replace(/\/$/u, '');
 }
 
 export function buildEndpointUrl(baseUrl: string, path: `/${string}`): string {
-	return `${baseUrl.replace(/\/+$/u, '')}${path}`;
+	const instanceUrl = baseUrl.replace(/\/+$/u, '');
+	return `${instanceUrl}/v1${path}`;
 }
