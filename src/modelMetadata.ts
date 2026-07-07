@@ -67,15 +67,6 @@ export class ModelMetadataIndex {
 	}
 }
 
-export function buildBaseLlmModelMetadataIndex(value: unknown): ModelMetadataIndex {
-	return new ModelMetadataIndex(readProviderCatalogEntries(value));
-}
-
-export function buildBaseLlmModelMetadataLookup(value: unknown): ModelMetadataLookup {
-	const index = buildBaseLlmModelMetadataIndex(value);
-	return (model) => index.lookup(model.id, providerHintsFromModel(model));
-}
-
 export function buildModelsDevModelMetadataIndex(value: unknown): ModelMetadataIndex {
 	return new ModelMetadataIndex(readModelsDevEntries(value));
 }

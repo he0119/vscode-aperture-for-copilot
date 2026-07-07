@@ -1,12 +1,8 @@
 import { MODEL_METADATA_FETCH_TIMEOUT_MS } from './constants';
-import { getModelMetadataSource, getModelMetadataUrl } from './config';
+import { getModelMetadataUrl } from './config';
 import { logger } from './logger';
-import {
-	buildBaseLlmModelMetadataIndex,
-	buildModelsDevModelMetadataIndex,
-	providerHintsFromModel,
-} from './modelMetadata';
-import type { ModelMetadataLookup, ModelMetadataSource } from './types';
+import { buildModelsDevModelMetadataIndex, providerHintsFromModel } from './modelMetadata';
+import type { ModelMetadataLookup } from './types';
 
 export class ModelMetadataService {
 	private cachedKey: string | undefined;
@@ -24,13 +20,8 @@ export class ModelMetadataService {
 	}
 
 	async getLookup(): Promise<ModelMetadataLookup | undefined> {
-		const source = getModelMetadataSource();
-		if (source === 'off') {
-			return undefined;
-		}
-
 		const url = getModelMetadataUrl();
-		const key = `${source}:${url}`;
+		const key = url;
 		if (this.cachedKey === key) {
 			return this.cachedLookup;
 		}
@@ -39,7 +30,7 @@ export class ModelMetadataService {
 		}
 
 		this.pendingKey = key;
-		this.pendingLookup = this.loadLookup(source, url).finally(() => {
+		this.pendingLookup = this.loadLookup(url).finally(() => {
 			this.pendingKey = undefined;
 			this.pendingLookup = undefined;
 		});
@@ -49,25 +40,19 @@ export class ModelMetadataService {
 		return lookup;
 	}
 
-	private async loadLookup(
-		source: Exclude<ModelMetadataSource, 'off'>,
-		url: string,
-	): Promise<ModelMetadataLookup | undefined> {
+	private async loadLookup(url: string): Promise<ModelMetadataLookup | undefined> {
 		try {
 			const body = await fetchJson(url, this.userAgent);
-			const index =
-				source === 'modelsdev'
-					? buildModelsDevModelMetadataIndex(body)
-					: buildBaseLlmModelMetadataIndex(body);
+			const index = buildModelsDevModelMetadataIndex(body);
 			if (index.size === 0) {
-				logger.warn(`${source} metadata did not contain usable model limits from ${url}`);
+				logger.warn(`models.dev metadata did not contain usable model limits from ${url}`);
 				return undefined;
 			}
-			logger.debug(`Loaded ${index.size} ${source} model metadata entries from ${url}`);
+			logger.debug(`Loaded ${index.size} models.dev model metadata entries from ${url}`);
 			return (model) => index.lookup(model.id, providerHintsFromModel(model));
 		} catch (error) {
-			logger.warn(`Failed to load ${source} model metadata`, error);
-			logger.debug(`Configured ${source} metadata URL was ${url}`);
+			logger.warn('Failed to load models.dev model metadata', error);
+			logger.debug(`Configured models.dev metadata URL was ${url}`);
 			return undefined;
 		}
 	}

@@ -22,5 +22,5 @@ GitHub Copilot Chat 的模型选择器。
 
 - 分支名遵循约定式提交风格：`<type>/<short-kebab-summary>`。
 - `type` 使用常见提交类型，例如 `feat`、`fix`、`docs`、`refactor`、`test`、`chore`、`ci`、`build`、`perf`、`style` 或 `revert`。
-- 示例：`feat/basellm-model-metadata`、`fix/model-refresh-cache`、`docs/agent-instructions`。
+- 示例：`feat/model-metadata`、`fix/model-refresh-cache`、`docs/agent-instructions`。
 - 提交信息和 Pull Request 标题使用中文，并遵循约定式提交格式。

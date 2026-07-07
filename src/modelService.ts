@@ -3,7 +3,6 @@ import {
 	getConfiguredBaseUrl,
 	getEnabledModelIds,
 	getManualModels,
-	getModelMetadataSource,
 	getModelMetadataUrl,
 	getModelSource,
 	getToolLimit,
@@ -32,7 +31,6 @@ export class ModelService {
 		const key = JSON.stringify({
 			baseUrl: getConfiguredBaseUrl(),
 			source: getModelSource(),
-			metadataSource: getModelMetadataSource(),
 			metadataUrl: getModelMetadataUrl(),
 			enabled: getEnabledModelIds(),
 			manual: getManualModels(),

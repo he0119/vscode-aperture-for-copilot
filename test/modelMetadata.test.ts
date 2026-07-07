@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-	buildBaseLlmModelMetadataIndex,
 	buildModelsDevModelMetadataIndex,
 	extractModelTokenLimits,
 	resolveModelMetadata,
@@ -24,7 +23,7 @@ test('extractModelTokenLimits reads input-specific limits before context limits'
 });
 
 test('model metadata index matches provider-prefixed model IDs', () => {
-	const index = buildBaseLlmModelMetadataIndex({
+	const index = buildModelsDevModelMetadataIndex({
 		deepseek: {
 			id: 'deepseek',
 			name: 'DeepSeek',
@@ -48,7 +47,7 @@ test('model metadata index matches provider-prefixed model IDs', () => {
 });
 
 test('model metadata index prefers matching providers when IDs collide', () => {
-	const index = buildBaseLlmModelMetadataIndex({
+	const index = buildModelsDevModelMetadataIndex({
 		openai: {
 			id: 'openai',
 			name: 'OpenAI',
