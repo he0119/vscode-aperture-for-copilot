@@ -3,7 +3,7 @@ import {
 	DEFAULT_MAX_OUTPUT_TOKENS,
 	DEFAULT_TOOL_LIMIT,
 } from './constants';
-import { resolveModelTokenLimits } from './modelMetadata';
+import { resolveModelMetadata } from './modelMetadata';
 import type {
 	ApertureModel,
 	ApertureProviderModel,
@@ -43,7 +43,7 @@ export function buildAutoModels(
 			continue;
 		}
 		seen.add(model.id);
-		const limits = resolveModelTokenLimits(model, options.metadataLookup);
+		const metadata = resolveModelMetadata(model, options.metadataLookup);
 		models.push({
 			id: model.id,
 			apiModelId: model.id,
@@ -51,10 +51,10 @@ export function buildAutoModels(
 			detail: buildModelDetail(model),
 			family: providerText(model) || 'aperture',
 			version: model.id,
-			maxInputTokens: limits.maxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS,
-			maxOutputTokens: limits.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-			toolCalling: options.toolLimit,
-			thinking: thinking.has(model.id.toLowerCase()),
+			maxInputTokens: metadata.maxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS,
+			maxOutputTokens: metadata.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+			toolCalling: normalizeAutoToolCalling(metadata.toolCalling, options.toolLimit),
+			thinking: thinking.has(model.id.toLowerCase()) || metadata.thinking === true,
 		});
 	}
 
@@ -138,4 +138,8 @@ function normalizeToolCalling(value: unknown, toolLimit: number): boolean | numb
 		return value;
 	}
 	return value === true ? toolLimit : toolLimit;
+}
+
+function normalizeAutoToolCalling(value: boolean | undefined, toolLimit: number): boolean | number {
+	return value === false ? false : toolLimit;
 }

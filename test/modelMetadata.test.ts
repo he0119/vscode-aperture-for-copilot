@@ -4,6 +4,7 @@ import {
 	buildBaseLlmModelMetadataIndex,
 	buildModelsDevModelMetadataIndex,
 	extractModelTokenLimits,
+	resolveModelMetadata,
 	resolveModelTokenLimits,
 } from '../src/modelMetadata';
 
@@ -78,20 +79,24 @@ test('model metadata index prefers matching providers when IDs collide', () => {
 
 test('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () => {
 	const index = buildModelsDevModelMetadataIndex({
-		'openai/gpt-5': {
-			id: 'openai/gpt-5',
-			name: 'GPT-5',
+		'deepseek/deepseek-v4-flash': {
+			id: 'deepseek/deepseek-v4-flash',
+			name: 'DeepSeek V4 Flash',
+			family: 'deepseek-flash',
+			reasoning: true,
+			tool_call: false,
 			limit: {
-				context: 400_000,
-				input: 272_000,
-				output: 128_000,
+				context: 1_000_000,
+				output: 384_000,
 			},
 		},
 	});
 
-	assert.deepEqual(index.lookup('gpt-5', ['OpenAI']), {
-		maxInputTokens: 272_000,
-		maxOutputTokens: 128_000,
+	assert.deepEqual(index.lookup('deepseek-v4-flash', ['DeepSeek']), {
+		maxInputTokens: 1_000_000,
+		maxOutputTokens: 384_000,
+		thinking: true,
+		toolCalling: false,
 	});
 });
 
@@ -144,4 +149,20 @@ test('resolveModelTokenLimits keeps provider fields ahead of catalog metadata', 
 		maxInputTokens: 128_000,
 		maxOutputTokens: 16_384,
 	});
+});
+
+test('resolveModelMetadata keeps provider capabilities ahead of catalog metadata', () => {
+	const metadata = resolveModelMetadata(
+		{
+			id: 'gpt-4o',
+			tool_call: false,
+		},
+		() => ({
+			thinking: true,
+			toolCalling: true,
+		}),
+	);
+
+	assert.equal(metadata.thinking, true);
+	assert.equal(metadata.toolCalling, false);
 });

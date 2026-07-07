@@ -88,11 +88,11 @@
             "off"
           ],
           "enumDescriptions": [
-            "Fetch models.dev model-only metadata and use it to fill context and output token limits.",
-            "Fetch BaseLLM model metadata and use it to fill context and output token limits.",
+            "Fetch models.dev model-only metadata and use it to fill token limits and capability flags.",
+            "Fetch BaseLLM model metadata and use it to fill token limits and capability flags.",
             "Do not fetch external model metadata; use provider fields and built-in defaults only."
           ],
-          "description": "Optional external metadata source for auto-discovered model token limits."
+          "description": "Optional external metadata source for auto-discovered model limits and capabilities."
         },
         "aperture-copilot.modelMetadataUrl": {
           "type": "string",

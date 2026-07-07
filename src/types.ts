@@ -32,15 +32,39 @@ export interface ModelTokenLimits {
 	maxOutputTokens?: number;
 }
 
-export type ModelMetadataLookup = (model: ApertureProviderModel & { id: string }) => ModelTokenLimits | undefined;
+export interface ModelCapabilityMetadata {
+	thinking?: boolean;
+	toolCalling?: boolean;
+}
+
+export type ModelMetadata = ModelTokenLimits & ModelCapabilityMetadata;
+
+export type ModelMetadataLookup = (model: ApertureProviderModel & { id: string }) => ModelMetadata | undefined;
 
 export interface ApertureProviderModel {
 	id?: unknown;
 	object?: unknown;
 	owned_by?: unknown;
+	reasoning?: unknown;
+	reasoning_options?: unknown;
+	interleaved?: unknown;
+	thinking?: unknown;
+	tool_call?: unknown;
+	toolCalling?: unknown;
+	capabilities?: {
+		thinking?: unknown;
+		tool_call?: unknown;
+		toolCalling?: unknown;
+	};
 	metadata?: {
+		capabilities?: {
+			thinking?: unknown;
+			tool_call?: unknown;
+			toolCalling?: unknown;
+		};
 		context_length?: unknown;
 		context_window?: unknown;
+		interleaved?: unknown;
 		input_token_limit?: unknown;
 		limit?: {
 			context?: unknown;
@@ -59,6 +83,11 @@ export interface ApertureProviderModel {
 		maxOutputTokens?: unknown;
 		maxInputTokens?: unknown;
 		output_token_limit?: unknown;
+		reasoning?: unknown;
+		reasoning_options?: unknown;
+		thinking?: unknown;
+		tool_call?: unknown;
+		toolCalling?: unknown;
 		provider?: {
 			id?: unknown;
 			name?: unknown;

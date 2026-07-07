@@ -5,7 +5,7 @@
 ## 功能
 
 - 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。
-- 自动从模型列表字段或 models.dev / BaseLLM metadata 补齐模型上下文和最大输出 token。
+- 自动从模型列表字段或 models.dev / BaseLLM metadata 补齐上下文、最大输出 token 和能力标记。
 - 支持通过 `aperture-copilot.models` 手动定义模型。
 - 将 OpenAI-compatible 的流式 chat completions 输出到 Copilot Chat。
 - 对配置为 thinking 的模型，把 `reasoning_content` 输出为 Copilot thinking part。
@@ -78,6 +78,11 @@
 
 - `modelsdev`：`https://models.dev/models.json`
 - `basellm`：`https://basellm.github.io/llm-metadata/api/all.json`
+
+扩展也会从 metadata 读取部分能力标记：
+
+- `tool_call: false` 会禁用该自动模型的工具调用。
+- `reasoning: true` 会在明确兼容 DeepSeek-style `reasoning_content` 的模型上自动启用 thinking 控制。
 
 如果不希望扩展访问外部 metadata，可设置：
 

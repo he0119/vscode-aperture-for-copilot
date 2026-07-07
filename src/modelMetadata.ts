@@ -1,5 +1,7 @@
 import type {
+	ModelCapabilityMetadata,
 	ApertureProviderModel,
+	ModelMetadata,
 	ModelMetadataLookup,
 	ModelTokenLimits,
 } from './types';
@@ -12,7 +14,7 @@ interface CatalogEntry {
 	providerAliases: readonly string[];
 	providerId: string;
 	providerName?: string;
-	limits: ModelTokenLimits;
+	metadata: ModelMetadata;
 }
 
 interface ScoredEntry {
@@ -37,7 +39,7 @@ export class ModelMetadataIndex {
 		return this.entries.length;
 	}
 
-	lookup(modelId: string, providerHints: readonly string[] = []): ModelTokenLimits | undefined {
+	lookup(modelId: string, providerHints: readonly string[] = []): ModelMetadata | undefined {
 		const candidates = new Map<CatalogEntry, number>();
 
 		for (const { key, score } of lookupKeys(modelId)) {
@@ -61,7 +63,7 @@ export class ModelMetadataIndex {
 			}
 		}
 
-		return best ? { ...best.entry.limits } : undefined;
+		return best ? { ...best.entry.metadata } : undefined;
 	}
 }
 
@@ -87,11 +89,25 @@ export function resolveModelTokenLimits(
 	model: ProviderModelWithId,
 	metadataLookup?: ModelMetadataLookup,
 ): ModelTokenLimits {
+	const metadata = resolveModelMetadata(model, metadataLookup);
+	return {
+		maxInputTokens: metadata.maxInputTokens,
+		maxOutputTokens: metadata.maxOutputTokens,
+	};
+}
+
+export function resolveModelMetadata(
+	model: ProviderModelWithId,
+	metadataLookup?: ModelMetadataLookup,
+): ModelMetadata {
 	const explicit = extractModelTokenLimits(model);
 	const catalog = metadataLookup?.(model);
+	const explicitCapabilities = extractModelCapabilityMetadata(model);
 	return {
 		maxInputTokens: explicit?.maxInputTokens ?? catalog?.maxInputTokens,
 		maxOutputTokens: explicit?.maxOutputTokens ?? catalog?.maxOutputTokens,
+		thinking: explicitCapabilities?.thinking ?? catalog?.thinking,
+		toolCalling: explicitCapabilities?.toolCalling ?? catalog?.toolCalling,
 	};
 }
 
@@ -152,6 +168,40 @@ export function extractModelTokenLimits(value: unknown): ModelTokenLimits | unde
 	return { maxInputTokens, maxOutputTokens };
 }
 
+export function extractModelCapabilityMetadata(value: unknown): ModelCapabilityMetadata | undefined {
+	const record = asRecord(value);
+	if (!record) {
+		return undefined;
+	}
+
+	const metadata = asRecord(record.metadata);
+	const capabilities = asRecord(record.capabilities);
+	const metadataCapabilities = asRecord(metadata?.capabilities);
+	const thinking = firstBoolean([
+		record.thinking,
+		capabilities?.thinking,
+		metadata?.thinking,
+		metadataCapabilities?.thinking,
+		supportsDeepSeekThinking(record),
+		supportsDeepSeekThinking(metadata),
+	]);
+	const toolCalling = firstBoolean([
+		record.tool_call,
+		record.toolCalling,
+		capabilities?.tool_call,
+		capabilities?.toolCalling,
+		metadata?.tool_call,
+		metadata?.toolCalling,
+		metadataCapabilities?.tool_call,
+		metadataCapabilities?.toolCalling,
+	]);
+
+	if (thinking === undefined && toolCalling === undefined) {
+		return undefined;
+	}
+	return { thinking, toolCalling };
+}
+
 export function providerHintsFromModel(model: ProviderModelWithId): string[] {
 	const metadata = asRecord(model.metadata);
 	const provider = asRecord(metadata?.provider);
@@ -183,8 +233,8 @@ function readProviderCatalogEntries(value: unknown): CatalogEntry[] {
 			if (!model) {
 				continue;
 			}
-			const limits = extractModelTokenLimits(model);
-			if (!limits) {
+			const metadata = extractModelMetadata(model);
+			if (!metadata) {
 				continue;
 			}
 
@@ -194,7 +244,7 @@ function readProviderCatalogEntries(value: unknown): CatalogEntry[] {
 				providerAliases: providerAliases(providerId, stringValue(provider.id), stringValue(provider.name)),
 				providerId,
 				providerName: stringValue(provider.name),
-				limits,
+				metadata,
 			});
 		}
 	}
@@ -233,8 +283,8 @@ function readModelOnlyCatalogEntries(value: unknown): CatalogEntry[] {
 		if (!model) {
 			continue;
 		}
-		const limits = extractModelTokenLimits(model);
-		if (!limits) {
+		const metadata = extractModelMetadata(model);
+		if (!metadata) {
 			continue;
 		}
 
@@ -245,7 +295,7 @@ function readModelOnlyCatalogEntries(value: unknown): CatalogEntry[] {
 			modelName: stringValue(model.name),
 			providerAliases: providerAliases(providerId),
 			providerId,
-			limits,
+			metadata,
 		});
 	}
 
@@ -327,6 +377,50 @@ function firstPositiveInteger(values: readonly unknown[]): number | undefined {
 		}
 	}
 	return undefined;
+}
+
+function extractModelMetadata(value: unknown): ModelMetadata | undefined {
+	const limits = extractModelTokenLimits(value);
+	const capabilities = extractModelCapabilityMetadata(value);
+	if (!limits && !capabilities) {
+		return undefined;
+	}
+	return { ...limits, ...capabilities };
+}
+
+function supportsDeepSeekThinking(value: unknown): boolean | undefined {
+	const record = asRecord(value);
+	if (!record) {
+		return undefined;
+	}
+	if (booleanValue(record.reasoning) !== true) {
+		return undefined;
+	}
+	const interleaved = asRecord(record.interleaved);
+	if (stringValue(interleaved?.field) === 'reasoning_content') {
+		return true;
+	}
+	if (
+		slugKey(stringValue(record.id)).includes('deepseek') ||
+		slugKey(stringValue(record.family)).startsWith('deepseek')
+	) {
+		return true;
+	}
+	return undefined;
+}
+
+function firstBoolean(values: readonly unknown[]): boolean | undefined {
+	for (const value of values) {
+		const normalized = booleanValue(value);
+		if (normalized !== undefined) {
+			return normalized;
+		}
+	}
+	return undefined;
+}
+
+function booleanValue(value: unknown): boolean | undefined {
+	return typeof value === 'boolean' ? value : undefined;
 }
 
 function positiveInteger(value: unknown): number | undefined {

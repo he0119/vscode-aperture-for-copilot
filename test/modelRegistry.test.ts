@@ -85,6 +85,35 @@ test('buildAutoModels uses provider limits before external metadata', () => {
 	assert.equal(models[1]?.maxOutputTokens, 384_000);
 });
 
+test('buildAutoModels uses external capability metadata', () => {
+	const models = buildAutoModels(
+		{
+			data: [
+				{
+					id: 'deepseek-v4-flash',
+				},
+				{
+					id: 'no-tools-model',
+				},
+			],
+		},
+		{
+			enabledModelIds: [],
+			metadataLookup: (model) =>
+				model.id === 'deepseek-v4-flash'
+					? { thinking: true, toolCalling: true }
+					: { toolCalling: false },
+			thinkingModelIds: [],
+			toolLimit: 64,
+		},
+	);
+
+	assert.equal(models[0]?.thinking, true);
+	assert.equal(models[0]?.toolCalling, 64);
+	assert.equal(models[1]?.thinking, false);
+	assert.equal(models[1]?.toolCalling, false);
+});
+
 test('buildManualModels maps apiModelId and defaults display fields', () => {
 	const models = buildManualModels(
 		[
