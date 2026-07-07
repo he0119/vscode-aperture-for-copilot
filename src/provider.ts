@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { AuthManager } from './auth';
 import {
 	getConfiguredBaseUrl,
 	getMaxTokens,
@@ -21,7 +20,6 @@ type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions 
 };
 
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
-	private readonly auth: AuthManager;
 	private readonly models: ModelService;
 	private readonly userAgent: string;
 	private readonly onDidChangeLanguageModelChatInformationEmitter = new vscode.EventEmitter<void>();
@@ -31,7 +29,6 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 		this.onDidChangeLanguageModelChatInformationEmitter.event;
 
 	constructor(private readonly context: vscode.ExtensionContext) {
-		this.auth = new AuthManager(context);
 		this.userAgent = createUserAgent(context);
 		this.models = new ModelService(this.userAgent);
 
@@ -42,7 +39,6 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 					this.refreshModels();
 				}
 			}),
-			context.secrets.onDidChange(() => this.refreshModels()),
 		);
 	}
 
@@ -55,12 +51,6 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 				this.refreshModels();
 				vscode.window.showInformationMessage('Aperture models refreshed.');
 			}),
-			vscode.commands.registerCommand('aperture-copilot.setApiKey', () =>
-				this.configureApiKey(),
-			),
-			vscode.commands.registerCommand('aperture-copilot.clearApiKey', () =>
-				this.clearApiKey(),
-			),
 			vscode.commands.registerCommand('aperture-copilot.openSettings', () =>
 				vscode.commands.executeCommand('workbench.action.openSettings', `@ext:local.aperture-for-copilot`),
 			),
@@ -105,19 +95,6 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 		);
 	}
 
-	async configureApiKey(): Promise<void> {
-		if (await this.auth.promptForApiKey()) {
-			this.refreshModels();
-			vscode.window.showInformationMessage('Aperture API key updated.');
-		}
-	}
-
-	async clearApiKey(): Promise<void> {
-		await this.auth.deleteApiKey();
-		this.refreshModels();
-		vscode.window.showInformationMessage('Aperture API key cleared.');
-	}
-
 	async provideLanguageModelChatInformation(
 		_options: vscode.PrepareLanguageModelChatModelOptions,
 		_token: vscode.CancellationToken,
@@ -126,8 +103,7 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 			return [];
 		}
 
-		const apiKey = await this.auth.getApiKey();
-		const models = await this.models.getModels(apiKey);
+		const models = await this.models.getModels();
 		return models.map((model) => toChatInformation(model));
 	}
 
@@ -143,14 +119,13 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 			throw new Error('Aperture base URL is not configured. Run "Aperture: Set Base URL".');
 		}
 
-		const apiKey = await this.auth.getApiKey();
-		const model = await this.models.resolveModel(modelInfo.id, apiKey);
+		const model = await this.models.resolveModel(modelInfo.id);
 		if (!model) {
 			throw new Error(`Aperture model "${modelInfo.id}" is no longer available.`);
 		}
 
 		const request = buildRequest(model, messages, options);
-		const client = new ApertureClient(baseUrl, apiKey, this.userAgent);
+		const client = new ApertureClient(baseUrl, this.userAgent);
 
 		await client.streamChatCompletion(
 			request,

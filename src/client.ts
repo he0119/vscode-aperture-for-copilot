@@ -7,7 +7,6 @@ import type { ChatCompletionRequest, StreamCallbacks } from './types';
 export class ApertureClient {
 	constructor(
 		private readonly baseUrl: string,
-		private readonly apiKey: string | undefined,
 		private readonly userAgent: string,
 	) {}
 
@@ -83,9 +82,6 @@ export class ApertureClient {
 			'Content-Type': 'application/json',
 			'User-Agent': this.userAgent,
 		};
-		if (this.apiKey) {
-			headers.Authorization = `Bearer ${this.apiKey}`;
-		}
 		return headers;
 	}
 }

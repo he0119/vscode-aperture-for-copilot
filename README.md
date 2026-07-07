@@ -29,8 +29,6 @@
 
 4. 打开 Copilot Chat，并在模型选择器里选择 Aperture 模型。
 
-API key 是可选的。如果你的 Aperture 部署要求鉴权，运行 `Aperture: Set API Key`；密钥会保存在 VS Code SecretStorage 中。
-
 ## 功能
 
 - 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。

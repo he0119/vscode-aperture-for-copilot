@@ -50,14 +50,6 @@
         "title": "Aperture: Refresh Models"
       },
       {
-        "command": "aperture-copilot.setApiKey",
-        "title": "Aperture: Set API Key"
-      },
-      {
-        "command": "aperture-copilot.clearApiKey",
-        "title": "Aperture: Clear API Key"
-      },
-      {
         "command": "aperture-copilot.openSettings",
         "title": "Aperture: Open Settings"
       },

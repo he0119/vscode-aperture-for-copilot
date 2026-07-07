@@ -22,7 +22,7 @@ export class ModelService {
 		this.cachedModels = undefined;
 	}
 
-	async getModels(apiKey: string | undefined): Promise<ApertureModel[]> {
+	async getModels(): Promise<ApertureModel[]> {
 		const key = JSON.stringify({
 			baseUrl: getConfiguredBaseUrl(),
 			source: getModelSource(),
@@ -30,24 +30,23 @@ export class ModelService {
 			manual: getManualModels(),
 			thinking: getThinkingModelIds(),
 			toolLimit: getToolLimit(),
-			hasApiKey: Boolean(apiKey),
 		});
 
 		if (this.cachedKey === key && this.cachedModels) {
 			return this.cachedModels;
 		}
 
-		const models = await this.loadModels(apiKey);
+		const models = await this.loadModels();
 		this.cachedKey = key;
 		this.cachedModels = models;
 		return models;
 	}
 
-	async resolveModel(id: string, apiKey: string | undefined): Promise<ApertureModel | undefined> {
-		return (await this.getModels(apiKey)).find((model) => model.id === id);
+	async resolveModel(id: string): Promise<ApertureModel | undefined> {
+		return (await this.getModels()).find((model) => model.id === id);
 	}
 
-	private async loadModels(apiKey: string | undefined): Promise<ApertureModel[]> {
+	private async loadModels(): Promise<ApertureModel[]> {
 		const toolLimit = getToolLimit();
 		if (getModelSource() === 'manual') {
 			return buildManualModels(getManualModels(), toolLimit);
@@ -61,7 +60,7 @@ export class ModelService {
 
 		try {
 			const response = await fetch(buildEndpointUrl(baseUrl, '/models'), {
-				headers: buildHeaders(apiKey, this.userAgent),
+				headers: buildHeaders(this.userAgent),
 			});
 			if (!response.ok) {
 				throw new Error(`Model list request failed with HTTP ${response.status}`);
@@ -81,9 +80,8 @@ export class ModelService {
 	}
 }
 
-function buildHeaders(apiKey: string | undefined, userAgent: string): HeadersInit {
+function buildHeaders(userAgent: string): HeadersInit {
 	return {
 		'User-Agent': userAgent,
-		...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
 	};
 }
