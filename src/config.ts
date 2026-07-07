@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
-import { CONFIG_SECTION, DEFAULT_TOOL_LIMIT } from './constants';
+import {
+	CONFIG_SECTION,
+	DEFAULT_MODELS_DEV_MODEL_METADATA_URL,
+	DEFAULT_TOOL_LIMIT,
+} from './constants';
 import { normalizeBaseUrl } from './configCore';
 import type { DebugMode, ManualModelConfig, ModelSource } from './types';
 
@@ -19,6 +23,19 @@ export function getModelSource(): ModelSource {
 	return value === 'manual' ? 'manual' : 'auto';
 }
 
+export function getModelMetadataUrl(): string {
+	const value = vscode.workspace
+		.getConfiguration(CONFIG_SECTION)
+		.get<string>('modelMetadataUrl', '');
+	try {
+		const url = new URL(value.trim() || DEFAULT_MODELS_DEV_MODEL_METADATA_URL);
+		url.hash = '';
+		return url.toString();
+	} catch {
+		return DEFAULT_MODELS_DEV_MODEL_METADATA_URL;
+	}
+}
+
 export function getEnabledModelIds(): string[] {
 	return vscode.workspace
 		.getConfiguration(CONFIG_SECTION)
@@ -28,13 +45,6 @@ export function getEnabledModelIds(): string[] {
 
 export function getManualModels(): ManualModelConfig[] {
 	return vscode.workspace.getConfiguration(CONFIG_SECTION).get<ManualModelConfig[]>('models', []);
-}
-
-export function getThinkingModelIds(): string[] {
-	return vscode.workspace
-		.getConfiguration(CONFIG_SECTION)
-		.get<string[]>('thinkingModelIds', [])
-		.filter((id) => id.trim().length > 0);
 }
 
 export function getMaxTokens(): number | undefined {

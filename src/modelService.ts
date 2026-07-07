@@ -3,32 +3,37 @@ import {
 	getConfiguredBaseUrl,
 	getEnabledModelIds,
 	getManualModels,
+	getModelMetadataUrl,
 	getModelSource,
-	getThinkingModelIds,
 	getToolLimit,
 } from './config';
 import { logger } from './logger';
+import { ModelMetadataService } from './modelMetadataService';
 import { buildAutoModels, buildManualModels } from './modelRegistry';
 import type { ApertureModel, ModelsResponse } from './types';
 
 export class ModelService {
 	private cachedKey: string | undefined;
 	private cachedModels: ApertureModel[] | undefined;
+	private readonly metadata: ModelMetadataService;
 
-	constructor(private readonly userAgent: string) {}
+	constructor(private readonly userAgent: string) {
+		this.metadata = new ModelMetadataService(userAgent);
+	}
 
 	clear(): void {
 		this.cachedKey = undefined;
 		this.cachedModels = undefined;
+		this.metadata.clear();
 	}
 
 	async getModels(): Promise<ApertureModel[]> {
 		const key = JSON.stringify({
 			baseUrl: getConfiguredBaseUrl(),
 			source: getModelSource(),
+			metadataUrl: getModelMetadataUrl(),
 			enabled: getEnabledModelIds(),
 			manual: getManualModels(),
-			thinking: getThinkingModelIds(),
 			toolLimit: getToolLimit(),
 		});
 
@@ -66,9 +71,10 @@ export class ModelService {
 				throw new Error(`Model list request failed with HTTP ${response.status}`);
 			}
 			const body = (await response.json()) as ModelsResponse;
+			const metadataLookup = await this.metadata.getLookup();
 			const models = buildAutoModels(body, {
 				enabledModelIds: getEnabledModelIds(),
-				thinkingModelIds: getThinkingModelIds(),
+				metadataLookup,
 				toolLimit,
 			});
 			logger.debug(`Loaded ${models.length} Aperture model(s) from ${baseUrl}`);

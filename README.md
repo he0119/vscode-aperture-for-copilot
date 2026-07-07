@@ -5,6 +5,7 @@
 ## 功能
 
 - 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。
+- 自动从模型列表字段或 models.dev `models.json` 补齐上下文、最大输出 token 和能力标记。
 - 支持通过 `aperture-copilot.models` 手动定义模型。
 - 将 OpenAI-compatible 的流式 chat completions 输出到 Copilot Chat。
 - 对配置为 thinking 的模型，把 `reasoning_content` 输出为 Copilot thinking part。
@@ -46,12 +47,8 @@
 {
   "aperture-copilot.baseUrl": "http://<aperture-hostname>",
   "aperture-copilot.modelSource": "auto",
+  "aperture-copilot.modelMetadataUrl": "",
   "aperture-copilot.enabledModelIds": [],
-  "aperture-copilot.thinkingModelIds": [
-    "deepseek-v4-flash",
-    "deepseek-v4-pro",
-    "deepseek-ai/DeepSeek-V4-Flash"
-  ],
   "aperture-copilot.maxTokens": 0,
   "aperture-copilot.toolLimit": 128,
   "aperture-copilot.debugMode": "minimal"
@@ -64,6 +61,24 @@
 - `Aperture: Refresh Models`：重新拉取并刷新模型列表。
 - `Aperture: Open Settings`：打开扩展设置。
 - `Aperture: Show Logs`：查看诊断日志。
+
+自动模式下，模型 token 限制按以下优先级决定：
+
+1. Aperture `/v1/models` 返回的显式字段，例如 `context_length`、`limit.context`、`limit.input`、`max_output_tokens`。
+2. models.dev `models.json` 中的 `limit.context` / `limit.input` / `limit.output`。
+3. 扩展内置默认值：输入 `128000`，输出 `16384`。
+
+`modelMetadataUrl` 留空时使用默认地址 `https://models.dev/models.json`。
+
+扩展也会从 metadata 读取部分能力标记：
+
+- `tool_call: false` 会禁用该自动模型的工具调用。
+- `reasoning: true` 会自动启用 thinking 控制。
+
+thinking 模型会向 Copilot 暴露请求级 `reasoningEffort` 选项。当前在 models.dev 提供结构化 reasoning 选项前（见 [anomalyco/models.dev#314](https://github.com/anomalyco/models.dev/issues/314)），扩展按模型临时决定可选项：
+
+- DeepSeek 模型显示 `auto`、`none`、`high`、`max`；选择 `high` 或 `max` 时会额外发送 `reasoning_effort`。
+- 其他 reasoning 模型只显示开/关；默认 `auto` 只启用 thinking，让上游模型自行决定强度。
 
 手动模型配置示例：
 

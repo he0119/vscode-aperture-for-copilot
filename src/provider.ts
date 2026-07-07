@@ -11,7 +11,13 @@ import { ApertureClient } from './client';
 import { logger } from './logger';
 import { ModelService } from './modelService';
 import { convertMessages, convertTools } from './openaiConvert';
-import type { ApertureModel, ChatCompletionRequest, ThinkingEffort, ToolCall, Usage } from './types';
+import {
+	getReasoningEffortOptions,
+	normalizeThinkingSelection,
+	shouldSendReasoningEffort,
+	type ThinkingSelection,
+} from './reasoning';
+import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from './types';
 import { createUserAgent } from './userAgent';
 
 type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions & {
@@ -173,6 +179,7 @@ function buildRequest(
 	}
 
 	const thinkingEffort = getConfiguredThinkingEffort(options as ModelConfigurationOptions);
+	const thinkingEnabled = thinkingEffort !== 'none';
 	return {
 		model: model.apiModelId,
 		messages: convertMessages(messages, model.thinking),
@@ -183,9 +190,11 @@ function buildRequest(
 		...(model.thinking
 			? {
 					thinking: {
-						type: thinkingEffort === 'none' ? 'disabled' : 'enabled',
+						type: thinkingEnabled ? 'enabled' : 'disabled',
 					},
-					...(thinkingEffort === 'none' ? {} : { reasoning_effort: thinkingEffort }),
+					...(shouldSendReasoningEffort(model, thinkingEffort)
+						? { reasoning_effort: thinkingEffort }
+						: {}),
 				}
 			: {}),
 	};
@@ -206,37 +215,31 @@ function toChatInformation(model: ApertureModel): vscode.LanguageModelChatInform
 			toolCalling: model.toolCalling,
 			imageInput: false,
 		},
-		...(model.thinking ? { configurationSchema: buildThinkingEffortSchema() } : {}),
+		...(model.thinking ? { configurationSchema: buildThinkingEffortSchema(model) } : {}),
 	};
 	return info as vscode.LanguageModelChatInformation;
 }
 
-function buildThinkingEffortSchema() {
+function buildThinkingEffortSchema(model: ApertureModel) {
+	const options = getReasoningEffortOptions(model);
 	return {
 		properties: {
 			reasoningEffort: {
 				type: 'string',
-				title: 'Thinking',
-				enum: ['none', 'high', 'max'],
-				enumItemLabels: ['None', 'High', 'Max'],
-				enumDescriptions: [
-					'Do not send thinking parameters.',
-					'Balanced reasoning for most coding tasks.',
-					'Maximum reasoning for difficult agent tasks.',
-				],
-				default: 'high',
+				title: 'Reasoning',
+				enum: options.map((option) => option.value),
+				enumItemLabels: options.map((option) => option.label),
+				enumDescriptions: options.map((option) => option.description),
+				default: 'auto',
 				group: 'navigation',
 			},
 		},
 	} as const;
 }
 
-function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingEffort {
+function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingSelection {
 	const value = options.modelConfiguration?.reasoningEffort ?? options.configuration?.reasoningEffort;
-	if (value === 'none' || value === 'max') {
-		return value;
-	}
-	return 'high';
+	return normalizeThinkingSelection(value);
 }
 
 function createThinkingPart(content: string): vscode.LanguageModelResponsePart {

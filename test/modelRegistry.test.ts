@@ -23,7 +23,6 @@ test('buildAutoModels deduplicates model IDs and keeps the first provider', () =
 		},
 		{
 			enabledModelIds: [],
-			thinkingModelIds: ['deepseek-v4-flash'],
 			toolLimit: 128,
 		},
 	);
@@ -31,7 +30,7 @@ test('buildAutoModels deduplicates model IDs and keeps the first provider', () =
 	assert.equal(models.length, 2);
 	assert.equal(models[0]?.id, 'deepseek-v4-flash');
 	assert.match(models[0]?.detail ?? '', /DeepSeek/u);
-	assert.equal(models[0]?.thinking, true);
+	assert.equal(models[0]?.thinking, false);
 	assert.equal(models[1]?.thinking, false);
 });
 
@@ -42,7 +41,6 @@ test('buildAutoModels honors enabled model allow-list', () => {
 		},
 		{
 			enabledModelIds: ['b'],
-			thinkingModelIds: [],
 			toolLimit: 64,
 		},
 	);
@@ -52,6 +50,64 @@ test('buildAutoModels honors enabled model allow-list', () => {
 		['b'],
 	);
 	assert.equal(models[0]?.toolCalling, 64);
+});
+
+test('buildAutoModels uses provider limits before external metadata', () => {
+	const models = buildAutoModels(
+		{
+			data: [
+				{
+					id: 'gpt-4o',
+					limit: { context: 128_000, output: 16_384 },
+				},
+				{
+					id: 'deepseek-ai/DeepSeek-V4-Flash',
+					metadata: { provider: { name: 'DeepSeek' } },
+				},
+			],
+		},
+		{
+			enabledModelIds: [],
+			metadataLookup: (model) =>
+				model.id.toLowerCase().includes('deepseek-v4-flash')
+					? { maxInputTokens: 1_000_000, maxOutputTokens: 384_000 }
+					: { maxInputTokens: 400_000, maxOutputTokens: 128_000 },
+			toolLimit: 64,
+		},
+	);
+
+	assert.equal(models[0]?.maxInputTokens, 128_000);
+	assert.equal(models[0]?.maxOutputTokens, 16_384);
+	assert.equal(models[1]?.maxInputTokens, 1_000_000);
+	assert.equal(models[1]?.maxOutputTokens, 384_000);
+});
+
+test('buildAutoModels uses external capability metadata', () => {
+	const models = buildAutoModels(
+		{
+			data: [
+				{
+					id: 'deepseek-v4-flash',
+				},
+				{
+					id: 'no-tools-model',
+				},
+			],
+		},
+		{
+			enabledModelIds: [],
+			metadataLookup: (model) =>
+				model.id === 'deepseek-v4-flash'
+					? { thinking: true, toolCalling: true }
+					: { toolCalling: false },
+			toolLimit: 64,
+		},
+	);
+
+	assert.equal(models[0]?.thinking, true);
+	assert.equal(models[0]?.toolCalling, 64);
+	assert.equal(models[1]?.thinking, false);
+	assert.equal(models[1]?.toolCalling, false);
 });
 
 test('buildManualModels maps apiModelId and defaults display fields', () => {
