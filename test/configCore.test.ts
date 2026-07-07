@@ -9,17 +9,17 @@ test('normalizeBaseUrl handles empty input', () => {
 });
 
 test('normalizeBaseUrl adds scheme and keeps instance URLs at the root', () => {
-	assert.equal(normalizeBaseUrl('ai.long-antares.ts.net'), 'https://ai.long-antares.ts.net');
+	assert.equal(normalizeBaseUrl('aperture.example.com'), 'https://aperture.example.com');
 	assert.equal(
-		normalizeBaseUrl('https://ai.long-antares.ts.net'),
-		'https://ai.long-antares.ts.net',
+		normalizeBaseUrl('https://aperture.example.com'),
+		'https://aperture.example.com',
 	);
 });
 
 test('normalizeBaseUrl preserves /v1 as a normal instance path', () => {
 	assert.equal(
-		normalizeBaseUrl('https://ai.long-antares.ts.net/v1/'),
-		'https://ai.long-antares.ts.net/v1',
+		normalizeBaseUrl('https://aperture.example.com/v1/'),
+		'https://aperture.example.com/v1',
 	);
 	assert.equal(
 		normalizeBaseUrl('https://example.com/aperture/v1'),
@@ -40,8 +40,8 @@ test('normalizeBaseUrl preserves instance paths', () => {
 
 test('buildEndpointUrl appends OpenAI-compatible /v1 endpoint paths', () => {
 	assert.equal(
-		buildEndpointUrl('https://ai.long-antares.ts.net', '/models'),
-		'https://ai.long-antares.ts.net/v1/models',
+		buildEndpointUrl('https://aperture.example.com', '/models'),
+		'https://aperture.example.com/v1/models',
 	);
 	assert.equal(
 		buildEndpointUrl('https://example.com/aperture', '/chat/completions'),

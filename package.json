@@ -64,7 +64,7 @@
         "aperture-copilot.baseUrl": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Aperture instance URL. The extension appends `/v1` when calling OpenAI-compatible API endpoints. For example, set `https://ai.long-antares.ts.net`, not `https://ai.long-antares.ts.net/v1`."
+          "markdownDescription": "Aperture instance URL. The extension appends `/v1` when calling OpenAI-compatible API endpoints. For example, set `https://aperture.example.com`, not `https://aperture.example.com/v1`."
         },
         "aperture-copilot.modelSource": {
           "type": "string",
