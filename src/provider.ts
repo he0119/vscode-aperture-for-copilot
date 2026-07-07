@@ -227,8 +227,8 @@ function buildThinkingEffortSchema() {
 				enumDescriptions: [
 					'Enable thinking and let the provider choose the effort.',
 					'Disable thinking parameters.',
-					'Send DeepSeek-compatible reasoning_effort: high.',
-					'Send DeepSeek-compatible reasoning_effort: max.',
+					'Send reasoning_effort: high.',
+					'Send reasoning_effort: max.',
 				],
 				default: 'auto',
 				group: 'navigation',

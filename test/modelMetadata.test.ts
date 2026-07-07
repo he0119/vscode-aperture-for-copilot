@@ -100,6 +100,29 @@ test('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () =
 	});
 });
 
+test('buildModelsDevModelMetadataIndex treats generic reasoning models as thinking-capable', () => {
+	const index = buildModelsDevModelMetadataIndex({
+		'meituan/longcat-2.0': {
+			id: 'meituan/longcat-2.0',
+			name: 'LongCat-2.0',
+			family: 'longcat',
+			reasoning: true,
+			tool_call: true,
+			limit: {
+				context: 1_000_000,
+				output: 131_072,
+			},
+		},
+	});
+
+	assert.deepEqual(index.lookup('LongCat-2.0', ['LongCat']), {
+		maxInputTokens: 1_000_000,
+		maxOutputTokens: 131_072,
+		thinking: true,
+		toolCalling: true,
+	});
+});
+
 test('buildModelsDevModelMetadataIndex reads models.dev catalog.json shape', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		providers: {

@@ -182,8 +182,8 @@ export function extractModelCapabilityMetadata(value: unknown): ModelCapabilityM
 		capabilities?.thinking,
 		metadata?.thinking,
 		metadataCapabilities?.thinking,
-		supportsDeepSeekThinking(record),
-		supportsDeepSeekThinking(metadata),
+		supportsReasoningThinking(record),
+		supportsReasoningThinking(metadata),
 	]);
 	const toolCalling = firstBoolean([
 		record.tool_call,
@@ -388,25 +388,12 @@ function extractModelMetadata(value: unknown): ModelMetadata | undefined {
 	return { ...limits, ...capabilities };
 }
 
-function supportsDeepSeekThinking(value: unknown): boolean | undefined {
+function supportsReasoningThinking(value: unknown): boolean | undefined {
 	const record = asRecord(value);
 	if (!record) {
 		return undefined;
 	}
-	if (booleanValue(record.reasoning) !== true) {
-		return undefined;
-	}
-	const interleaved = asRecord(record.interleaved);
-	if (stringValue(interleaved?.field) === 'reasoning_content') {
-		return true;
-	}
-	if (
-		slugKey(stringValue(record.id)).includes('deepseek') ||
-		slugKey(stringValue(record.family)).startsWith('deepseek')
-	) {
-		return true;
-	}
-	return undefined;
+	return booleanValue(record.reasoning) === true ? true : undefined;
 }
 
 function firstBoolean(values: readonly unknown[]): boolean | undefined {
