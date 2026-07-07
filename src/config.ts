@@ -6,7 +6,12 @@ import {
 	DEFAULT_TOOL_LIMIT,
 } from './constants';
 import { normalizeBaseUrl } from './configCore';
-import type { DebugMode, ManualModelConfig, ModelMetadataSource, ModelSource } from './types';
+import type {
+	DebugMode,
+	ManualModelConfig,
+	ModelMetadataSource,
+	ModelSource,
+} from './types';
 
 export function getConfiguredBaseUrl(): string | undefined {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('baseUrl');
@@ -61,13 +66,6 @@ export function getEnabledModelIds(): string[] {
 
 export function getManualModels(): ManualModelConfig[] {
 	return vscode.workspace.getConfiguration(CONFIG_SECTION).get<ManualModelConfig[]>('models', []);
-}
-
-export function getThinkingModelIds(): string[] {
-	return vscode.workspace
-		.getConfiguration(CONFIG_SECTION)
-		.get<string[]>('thinkingModelIds', [])
-		.filter((id) => id.trim().length > 0);
 }
 
 export function getMaxTokens(): number | undefined {

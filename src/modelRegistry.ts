@@ -15,7 +15,6 @@ import type {
 export interface BuildAutoModelsOptions {
 	enabledModelIds: readonly string[];
 	metadataLookup?: ModelMetadataLookup;
-	thinkingModelIds: readonly string[];
 	toolLimit: number;
 }
 
@@ -27,7 +26,6 @@ export function buildAutoModels(
 ): ApertureModel[] {
 	const data = Array.isArray(response.data) ? response.data : [];
 	const enabled = new Set(options.enabledModelIds);
-	const thinking = new Set(options.thinkingModelIds.map((id) => id.toLowerCase()));
 	const seen = new Set<string>();
 	const models: ApertureModel[] = [];
 
@@ -54,7 +52,7 @@ export function buildAutoModels(
 			maxInputTokens: metadata.maxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS,
 			maxOutputTokens: metadata.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
 			toolCalling: normalizeAutoToolCalling(metadata.toolCalling, options.toolLimit),
-			thinking: thinking.has(model.id.toLowerCase()) || metadata.thinking === true,
+			thinking: metadata.thinking === true,
 		});
 	}
 

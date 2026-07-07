@@ -6,7 +6,6 @@ import {
 	getModelMetadataSource,
 	getModelMetadataUrl,
 	getModelSource,
-	getThinkingModelIds,
 	getToolLimit,
 } from './config';
 import { logger } from './logger';
@@ -37,7 +36,6 @@ export class ModelService {
 			metadataUrl: getModelMetadataUrl(),
 			enabled: getEnabledModelIds(),
 			manual: getManualModels(),
-			thinking: getThinkingModelIds(),
 			toolLimit: getToolLimit(),
 		});
 
@@ -79,7 +77,6 @@ export class ModelService {
 			const models = buildAutoModels(body, {
 				enabledModelIds: getEnabledModelIds(),
 				metadataLookup,
-				thinkingModelIds: getThinkingModelIds(),
 				toolLimit,
 			});
 			logger.debug(`Loaded ${models.length} Aperture model(s) from ${baseUrl}`);

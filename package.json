@@ -158,18 +158,6 @@
           },
           "description": "Manual model definitions used when `modelSource` is `manual`."
         },
-        "aperture-copilot.thinkingModelIds": {
-          "type": "array",
-          "default": [
-            "deepseek-v4-flash",
-            "deepseek-v4-pro",
-            "deepseek-ai/DeepSeek-V4-Flash"
-          ],
-          "items": {
-            "type": "string"
-          },
-          "description": "Model IDs that should receive DeepSeek-compatible thinking parameters in auto mode."
-        },
         "aperture-copilot.maxTokens": {
           "type": "number",
           "default": 0,

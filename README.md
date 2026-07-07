@@ -50,11 +50,6 @@
   "aperture-copilot.modelMetadataSource": "modelsdev",
   "aperture-copilot.modelMetadataUrl": "",
   "aperture-copilot.enabledModelIds": [],
-  "aperture-copilot.thinkingModelIds": [
-    "deepseek-v4-flash",
-    "deepseek-v4-pro",
-    "deepseek-ai/DeepSeek-V4-Flash"
-  ],
   "aperture-copilot.maxTokens": 0,
   "aperture-copilot.toolLimit": 128,
   "aperture-copilot.debugMode": "minimal"
@@ -83,6 +78,8 @@
 
 - `tool_call: false` 会禁用该自动模型的工具调用。
 - `reasoning: true` 会在明确兼容 DeepSeek-style `reasoning_content` 的模型上自动启用 thinking 控制。
+
+thinking 模型会向 Copilot 暴露请求级 `reasoningEffort` 选项。默认 `auto` 只启用 thinking，让上游模型自行决定强度；选择 `high` 或 `max` 时才会发送 DeepSeek-compatible `reasoning_effort`。
 
 如果不希望扩展访问外部 metadata，可设置：
 

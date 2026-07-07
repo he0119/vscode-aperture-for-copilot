@@ -19,6 +19,8 @@ type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions 
 	readonly configuration?: Record<string, unknown>;
 };
 
+type ThinkingSelection = ThinkingEffort | 'auto';
+
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 	private readonly models: ModelService;
 	private readonly userAgent: string;
@@ -173,6 +175,7 @@ function buildRequest(
 	}
 
 	const thinkingEffort = getConfiguredThinkingEffort(options as ModelConfigurationOptions);
+	const thinkingEnabled = thinkingEffort !== 'none';
 	return {
 		model: model.apiModelId,
 		messages: convertMessages(messages, model.thinking),
@@ -183,9 +186,11 @@ function buildRequest(
 		...(model.thinking
 			? {
 					thinking: {
-						type: thinkingEffort === 'none' ? 'disabled' : 'enabled',
+						type: thinkingEnabled ? 'enabled' : 'disabled',
 					},
-					...(thinkingEffort === 'none' ? {} : { reasoning_effort: thinkingEffort }),
+					...(thinkingEffort === 'high' || thinkingEffort === 'max'
+						? { reasoning_effort: thinkingEffort }
+						: {}),
 				}
 			: {}),
 	};
@@ -216,27 +221,28 @@ function buildThinkingEffortSchema() {
 		properties: {
 			reasoningEffort: {
 				type: 'string',
-				title: 'Thinking',
-				enum: ['none', 'high', 'max'],
-				enumItemLabels: ['None', 'High', 'Max'],
+				title: 'Reasoning Effort',
+				enum: ['auto', 'none', 'high', 'max'],
+				enumItemLabels: ['Auto', 'None', 'High', 'Max'],
 				enumDescriptions: [
-					'Do not send thinking parameters.',
-					'Balanced reasoning for most coding tasks.',
-					'Maximum reasoning for difficult agent tasks.',
+					'Enable thinking and let the provider choose the effort.',
+					'Disable thinking parameters.',
+					'Send DeepSeek-compatible reasoning_effort: high.',
+					'Send DeepSeek-compatible reasoning_effort: max.',
 				],
-				default: 'high',
+				default: 'auto',
 				group: 'navigation',
 			},
 		},
 	} as const;
 }
 
-function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingEffort {
+function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingSelection {
 	const value = options.modelConfiguration?.reasoningEffort ?? options.configuration?.reasoningEffort;
-	if (value === 'none' || value === 'max') {
+	if (value === 'auto' || value === 'none' || value === 'high' || value === 'max') {
 		return value;
 	}
-	return 'high';
+	return 'auto';
 }
 
 function createThinkingPart(content: string): vscode.LanguageModelResponsePart {

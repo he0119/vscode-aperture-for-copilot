@@ -23,7 +23,6 @@ test('buildAutoModels deduplicates model IDs and keeps the first provider', () =
 		},
 		{
 			enabledModelIds: [],
-			thinkingModelIds: ['deepseek-v4-flash'],
 			toolLimit: 128,
 		},
 	);
@@ -31,7 +30,7 @@ test('buildAutoModels deduplicates model IDs and keeps the first provider', () =
 	assert.equal(models.length, 2);
 	assert.equal(models[0]?.id, 'deepseek-v4-flash');
 	assert.match(models[0]?.detail ?? '', /DeepSeek/u);
-	assert.equal(models[0]?.thinking, true);
+	assert.equal(models[0]?.thinking, false);
 	assert.equal(models[1]?.thinking, false);
 });
 
@@ -42,7 +41,6 @@ test('buildAutoModels honors enabled model allow-list', () => {
 		},
 		{
 			enabledModelIds: ['b'],
-			thinkingModelIds: [],
 			toolLimit: 64,
 		},
 	);
@@ -74,7 +72,6 @@ test('buildAutoModels uses provider limits before external metadata', () => {
 				model.id.toLowerCase().includes('deepseek-v4-flash')
 					? { maxInputTokens: 1_000_000, maxOutputTokens: 384_000 }
 					: { maxInputTokens: 400_000, maxOutputTokens: 128_000 },
-			thinkingModelIds: [],
 			toolLimit: 64,
 		},
 	);
@@ -103,7 +100,6 @@ test('buildAutoModels uses external capability metadata', () => {
 				model.id === 'deepseek-v4-flash'
 					? { thinking: true, toolCalling: true }
 					: { toolCalling: false },
-			thinkingModelIds: [],
 			toolLimit: 64,
 		},
 	);
