@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+	buildBaseLlmModelMetadataIndex,
+	extractModelTokenLimits,
+	resolveModelTokenLimits,
+} from '../src/modelMetadata';
+
+test('extractModelTokenLimits reads input-specific limits before context limits', () => {
+	const limits = extractModelTokenLimits({
+		limit: {
+			context: 400_000,
+			input: 272_000,
+			output: 128_000,
+		},
+	});
+
+	assert.deepEqual(limits, {
+		maxInputTokens: 272_000,
+		maxOutputTokens: 128_000,
+	});
+});
+
+test('BaseLlmModelMetadataIndex matches provider-prefixed model IDs', () => {
+	const index = buildBaseLlmModelMetadataIndex({
+		deepseek: {
+			id: 'deepseek',
+			name: 'DeepSeek',
+			models: {
+				'deepseek-v4-flash': {
+					id: 'deepseek-v4-flash',
+					name: 'DeepSeek V4 Flash',
+					limit: {
+						context: 1_000_000,
+						output: 384_000,
+					},
+				},
+			},
+		},
+	});
+
+	assert.deepEqual(index.lookup('deepseek-ai/DeepSeek-V4-Flash', ['DeepSeek']), {
+		maxInputTokens: 1_000_000,
+		maxOutputTokens: 384_000,
+	});
+});
+
+test('BaseLlmModelMetadataIndex prefers matching providers when IDs collide', () => {
+	const index = buildBaseLlmModelMetadataIndex({
+		openai: {
+			id: 'openai',
+			name: 'OpenAI',
+			models: {
+				'gpt-4o': {
+					id: 'gpt-4o',
+					limit: { context: 128_000, output: 16_384 },
+				},
+			},
+		},
+		proxy: {
+			id: 'proxy',
+			name: 'Proxy',
+			models: {
+				'gpt-4o': {
+					id: 'gpt-4o',
+					limit: { context: 64_000, output: 8_192 },
+				},
+			},
+		},
+	});
+
+	assert.deepEqual(index.lookup('gpt-4o', ['Proxy']), {
+		maxInputTokens: 64_000,
+		maxOutputTokens: 8_192,
+	});
+});
+
+test('resolveModelTokenLimits keeps provider fields ahead of catalog metadata', () => {
+	const limits = resolveModelTokenLimits(
+		{
+			id: 'gpt-4o',
+			context_length: 128_000,
+			max_output_tokens: 16_384,
+		},
+		() => ({
+			maxInputTokens: 1_000_000,
+			maxOutputTokens: 32_768,
+		}),
+	);
+
+	assert.deepEqual(limits, {
+		maxInputTokens: 128_000,
+		maxOutputTokens: 16_384,
+	});
+});

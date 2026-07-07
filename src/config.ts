@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { CONFIG_SECTION, DEFAULT_TOOL_LIMIT } from './constants';
+import { CONFIG_SECTION, DEFAULT_MODEL_METADATA_URL, DEFAULT_TOOL_LIMIT } from './constants';
 import { normalizeBaseUrl } from './configCore';
-import type { DebugMode, ManualModelConfig, ModelSource } from './types';
+import type { DebugMode, ManualModelConfig, ModelMetadataSource, ModelSource } from './types';
 
 export function getConfiguredBaseUrl(): string | undefined {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('baseUrl');
@@ -17,6 +17,26 @@ export async function updateConfiguredBaseUrl(value: string | undefined): Promis
 export function getModelSource(): ModelSource {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('modelSource', 'auto');
 	return value === 'manual' ? 'manual' : 'auto';
+}
+
+export function getModelMetadataSource(): ModelMetadataSource {
+	const value = vscode.workspace
+		.getConfiguration(CONFIG_SECTION)
+		.get<string>('modelMetadataSource', 'basellm');
+	return value === 'off' ? 'off' : 'basellm';
+}
+
+export function getModelMetadataUrl(): string {
+	const value = vscode.workspace
+		.getConfiguration(CONFIG_SECTION)
+		.get<string>('modelMetadataUrl', DEFAULT_MODEL_METADATA_URL);
+	try {
+		const url = new URL(value.trim() || DEFAULT_MODEL_METADATA_URL);
+		url.hash = '';
+		return url.toString();
+	} catch {
+		return DEFAULT_MODEL_METADATA_URL;
+	}
 }
 
 export function getEnabledModelIds(): string[] {

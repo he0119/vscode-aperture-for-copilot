@@ -3,15 +3,18 @@ import {
 	DEFAULT_MAX_OUTPUT_TOKENS,
 	DEFAULT_TOOL_LIMIT,
 } from './constants';
+import { resolveModelTokenLimits } from './modelMetadata';
 import type {
 	ApertureModel,
 	ApertureProviderModel,
+	ModelMetadataLookup,
 	ManualModelConfig,
 	ModelsResponse,
 } from './types';
 
 export interface BuildAutoModelsOptions {
 	enabledModelIds: readonly string[];
+	metadataLookup?: ModelMetadataLookup;
 	thinkingModelIds: readonly string[];
 	toolLimit: number;
 }
@@ -40,6 +43,7 @@ export function buildAutoModels(
 			continue;
 		}
 		seen.add(model.id);
+		const limits = resolveModelTokenLimits(model, options.metadataLookup);
 		models.push({
 			id: model.id,
 			apiModelId: model.id,
@@ -47,8 +51,8 @@ export function buildAutoModels(
 			detail: buildModelDetail(model),
 			family: providerText(model) || 'aperture',
 			version: model.id,
-			maxInputTokens: DEFAULT_MAX_INPUT_TOKENS,
-			maxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
+			maxInputTokens: limits.maxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS,
+			maxOutputTokens: limits.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
 			toolCalling: options.toolLimit,
 			thinking: thinking.has(model.id.toLowerCase()),
 		});

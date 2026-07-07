@@ -54,6 +54,37 @@ test('buildAutoModels honors enabled model allow-list', () => {
 	assert.equal(models[0]?.toolCalling, 64);
 });
 
+test('buildAutoModels uses provider limits before external metadata', () => {
+	const models = buildAutoModels(
+		{
+			data: [
+				{
+					id: 'gpt-4o',
+					limit: { context: 128_000, output: 16_384 },
+				},
+				{
+					id: 'deepseek-ai/DeepSeek-V4-Flash',
+					metadata: { provider: { name: 'DeepSeek' } },
+				},
+			],
+		},
+		{
+			enabledModelIds: [],
+			metadataLookup: (model) =>
+				model.id.toLowerCase().includes('deepseek-v4-flash')
+					? { maxInputTokens: 1_000_000, maxOutputTokens: 384_000 }
+					: { maxInputTokens: 400_000, maxOutputTokens: 128_000 },
+			thinkingModelIds: [],
+			toolLimit: 64,
+		},
+	);
+
+	assert.equal(models[0]?.maxInputTokens, 128_000);
+	assert.equal(models[0]?.maxOutputTokens, 16_384);
+	assert.equal(models[1]?.maxInputTokens, 1_000_000);
+	assert.equal(models[1]?.maxOutputTokens, 384_000);
+});
+
 test('buildManualModels maps apiModelId and defaults display fields', () => {
 	const models = buildManualModels(
 		[

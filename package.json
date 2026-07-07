@@ -79,6 +79,24 @@
           ],
           "description": "Where the extension should get model definitions."
         },
+        "aperture-copilot.modelMetadataSource": {
+          "type": "string",
+          "default": "basellm",
+          "enum": [
+            "basellm",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Fetch BaseLLM model metadata and use it to fill context and output token limits.",
+            "Do not fetch external model metadata; use provider fields and built-in defaults only."
+          ],
+          "description": "Optional external metadata source for auto-discovered model token limits."
+        },
+        "aperture-copilot.modelMetadataUrl": {
+          "type": "string",
+          "default": "https://basellm.github.io/llm-metadata/api/all.json",
+          "markdownDescription": "BaseLLM-compatible metadata URL used when `aperture-copilot.modelMetadataSource` is `basellm`."
+        },
         "aperture-copilot.enabledModelIds": {
           "type": "array",
           "default": [],

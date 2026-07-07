@@ -5,6 +5,7 @@
 ## 功能
 
 - 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。
+- 自动从模型列表字段或 BaseLLM metadata 补齐模型上下文和最大输出 token。
 - 支持通过 `aperture-copilot.models` 手动定义模型。
 - 将 OpenAI-compatible 的流式 chat completions 输出到 Copilot Chat。
 - 对配置为 thinking 的模型，把 `reasoning_content` 输出为 Copilot thinking part。
@@ -46,6 +47,8 @@
 {
   "aperture-copilot.baseUrl": "http://<aperture-hostname>",
   "aperture-copilot.modelSource": "auto",
+  "aperture-copilot.modelMetadataSource": "basellm",
+  "aperture-copilot.modelMetadataUrl": "https://basellm.github.io/llm-metadata/api/all.json",
   "aperture-copilot.enabledModelIds": [],
   "aperture-copilot.thinkingModelIds": [
     "deepseek-v4-flash",
@@ -64,6 +67,20 @@
 - `Aperture: Refresh Models`：重新拉取并刷新模型列表。
 - `Aperture: Open Settings`：打开扩展设置。
 - `Aperture: Show Logs`：查看诊断日志。
+
+自动模式下，模型 token 限制按以下优先级决定：
+
+1. Aperture `/v1/models` 返回的显式字段，例如 `context_length`、`limit.context`、`limit.input`、`max_output_tokens`。
+2. BaseLLM metadata 中的 `limit.context` / `limit.input` / `limit.output`。
+3. 扩展内置默认值：输入 `128000`，输出 `16384`。
+
+如果不希望扩展访问外部 metadata，可设置：
+
+```json
+{
+  "aperture-copilot.modelMetadataSource": "off"
+}
+```
 
 手动模型配置示例：
 

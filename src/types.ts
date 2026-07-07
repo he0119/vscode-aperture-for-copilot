@@ -1,4 +1,5 @@
 export type ModelSource = 'auto' | 'manual';
+export type ModelMetadataSource = 'basellm' | 'off';
 export type DebugMode = 'minimal' | 'metadata' | 'verbose';
 export type ThinkingEffort = 'none' | 'high' | 'max';
 
@@ -26,17 +27,64 @@ export interface ApertureModel {
 	thinking: boolean;
 }
 
+export interface ModelTokenLimits {
+	maxInputTokens?: number;
+	maxOutputTokens?: number;
+}
+
+export type ModelMetadataLookup = (model: ApertureProviderModel & { id: string }) => ModelTokenLimits | undefined;
+
 export interface ApertureProviderModel {
 	id?: unknown;
 	object?: unknown;
 	owned_by?: unknown;
 	metadata?: {
+		context_length?: unknown;
+		context_window?: unknown;
+		input_token_limit?: unknown;
+		limit?: {
+			context?: unknown;
+			input?: unknown;
+			output?: unknown;
+		};
+		limits?: {
+			context?: unknown;
+			input?: unknown;
+			output?: unknown;
+		};
+		max_context_length?: unknown;
+		max_context_tokens?: unknown;
+		max_input_tokens?: unknown;
+		max_output_tokens?: unknown;
+		maxOutputTokens?: unknown;
+		maxInputTokens?: unknown;
+		output_token_limit?: unknown;
 		provider?: {
 			id?: unknown;
 			name?: unknown;
 			description?: unknown;
 		};
 	};
+	context_length?: unknown;
+	context_window?: unknown;
+	input_token_limit?: unknown;
+	limit?: {
+		context?: unknown;
+		input?: unknown;
+		output?: unknown;
+	};
+	limits?: {
+		context?: unknown;
+		input?: unknown;
+		output?: unknown;
+	};
+	max_context_length?: unknown;
+	max_context_tokens?: unknown;
+	max_input_tokens?: unknown;
+	max_output_tokens?: unknown;
+	maxOutputTokens?: unknown;
+	maxInputTokens?: unknown;
+	output_token_limit?: unknown;
 	pricing?: {
 		input?: unknown;
 		input_cache_read?: unknown;
