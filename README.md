@@ -76,6 +76,25 @@ API key 是可选的。如果你的 Aperture 部署要求鉴权，运行 `Apertu
 }
 ```
 
+## CI 与发布
+
+本仓库参考 `he0119/vscode-bangumiplan` 配置了 GitHub Actions：
+
+- push 和 pull request 到 `main` 时运行 `npm test`，并用 `npm run package` 验证 VSIX 打包。
+- push 到 `main` 或更新 pull request 时维护 Release Draft。
+- 推送 `v*` tag 时运行测试，并发布到 Visual Studio Marketplace。
+
+首次发布前需要在 GitHub 仓库 Secrets 中配置 `VS_MARKETPLACE_TOKEN`。该 token 需要具备 Visual Studio Marketplace 发布扩展的权限。
+
+发布新版本的常用流程：
+
+```sh
+npm version patch
+git push --follow-tags
+```
+
+当前 `package.json` 的 publisher 为 `he0119`；如果 Marketplace publisher 不同，需要先改成实际 publisher。
+
 ## 致谢
 
 本扩展是一个面向 Aperture 的独立实现，provider 架构参考了 MIT License 分发的 `Vizards/deepseek-v4-for-copilot`。
