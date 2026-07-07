@@ -13,6 +13,7 @@ import { logger } from './logger';
 import { ModelService } from './modelService';
 import { convertMessages, convertTools } from './openaiConvert';
 import type { ApertureModel, ChatCompletionRequest, ThinkingEffort, ToolCall, Usage } from './types';
+import { createUserAgent } from './userAgent';
 
 type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions & {
 	readonly modelConfiguration?: Record<string, unknown>;
@@ -21,7 +22,8 @@ type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions 
 
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 	private readonly auth: AuthManager;
-	private readonly models = new ModelService();
+	private readonly models: ModelService;
+	private readonly userAgent: string;
 	private readonly onDidChangeLanguageModelChatInformationEmitter = new vscode.EventEmitter<void>();
 	private active = true;
 
@@ -30,6 +32,8 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 
 	constructor(private readonly context: vscode.ExtensionContext) {
 		this.auth = new AuthManager(context);
+		this.userAgent = createUserAgent(context);
+		this.models = new ModelService(this.userAgent);
 
 		context.subscriptions.push(
 			this.onDidChangeLanguageModelChatInformationEmitter,
@@ -146,7 +150,7 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 		}
 
 		const request = buildRequest(model, messages, options);
-		const client = new ApertureClient(baseUrl, apiKey);
+		const client = new ApertureClient(baseUrl, apiKey, this.userAgent);
 
 		await client.streamChatCompletion(
 			request,

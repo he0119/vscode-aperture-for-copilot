@@ -15,6 +15,8 @@ export class ModelService {
 	private cachedKey: string | undefined;
 	private cachedModels: ApertureModel[] | undefined;
 
+	constructor(private readonly userAgent: string) {}
+
 	clear(): void {
 		this.cachedKey = undefined;
 		this.cachedModels = undefined;
@@ -59,7 +61,7 @@ export class ModelService {
 
 		try {
 			const response = await fetch(buildEndpointUrl(baseUrl, '/models'), {
-				headers: buildHeaders(apiKey),
+				headers: buildHeaders(apiKey, this.userAgent),
 			});
 			if (!response.ok) {
 				throw new Error(`Model list request failed with HTTP ${response.status}`);
@@ -79,6 +81,9 @@ export class ModelService {
 	}
 }
 
-function buildHeaders(apiKey: string | undefined): HeadersInit {
-	return apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
+function buildHeaders(apiKey: string | undefined, userAgent: string): HeadersInit {
+	return {
+		'User-Agent': userAgent,
+		...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+	};
 }

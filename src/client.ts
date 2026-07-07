@@ -8,6 +8,7 @@ export class ApertureClient {
 	constructor(
 		private readonly baseUrl: string,
 		private readonly apiKey: string | undefined,
+		private readonly userAgent: string,
 	) {}
 
 	async streamChatCompletion(
@@ -80,6 +81,7 @@ export class ApertureClient {
 	private buildHeaders(): HeadersInit {
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
+			'User-Agent': this.userAgent,
 		};
 		if (this.apiKey) {
 			headers.Authorization = `Bearer ${this.apiKey}`;
