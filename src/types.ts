@@ -1,5 +1,5 @@
 export type ModelSource = 'auto' | 'manual';
-export type ModelMetadataSource = 'basellm' | 'off';
+export type ModelMetadataSource = 'basellm' | 'modelsdev' | 'off';
 export type DebugMode = 'minimal' | 'metadata' | 'verbose';
 export type ThinkingEffort = 'none' | 'high' | 'max';
 

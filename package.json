@@ -81,12 +81,14 @@
         },
         "aperture-copilot.modelMetadataSource": {
           "type": "string",
-          "default": "basellm",
+          "default": "modelsdev",
           "enum": [
+            "modelsdev",
             "basellm",
             "off"
           ],
           "enumDescriptions": [
+            "Fetch models.dev model-only metadata and use it to fill context and output token limits.",
             "Fetch BaseLLM model metadata and use it to fill context and output token limits.",
             "Do not fetch external model metadata; use provider fields and built-in defaults only."
           ],
@@ -94,8 +96,8 @@
         },
         "aperture-copilot.modelMetadataUrl": {
           "type": "string",
-          "default": "https://basellm.github.io/llm-metadata/api/all.json",
-          "markdownDescription": "BaseLLM-compatible metadata URL used when `aperture-copilot.modelMetadataSource` is `basellm`."
+          "default": "",
+          "markdownDescription": "Optional metadata URL override. Leave empty to use the selected source default: `https://models.dev/models.json` for `modelsdev`, or `https://basellm.github.io/llm-metadata/api/all.json` for `basellm`."
         },
         "aperture-copilot.enabledModelIds": {
           "type": "array",

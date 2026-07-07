@@ -20,7 +20,7 @@ interface ScoredEntry {
 	keyScore: number;
 }
 
-export class BaseLlmModelMetadataIndex {
+export class ModelMetadataIndex {
 	private readonly byKey = new Map<string, ScoredEntry[]>();
 
 	constructor(private readonly entries: readonly CatalogEntry[]) {
@@ -65,12 +65,21 @@ export class BaseLlmModelMetadataIndex {
 	}
 }
 
-export function buildBaseLlmModelMetadataIndex(value: unknown): BaseLlmModelMetadataIndex {
-	return new BaseLlmModelMetadataIndex(readBaseLlmEntries(value));
+export function buildBaseLlmModelMetadataIndex(value: unknown): ModelMetadataIndex {
+	return new ModelMetadataIndex(readProviderCatalogEntries(value));
 }
 
 export function buildBaseLlmModelMetadataLookup(value: unknown): ModelMetadataLookup {
 	const index = buildBaseLlmModelMetadataIndex(value);
+	return (model) => index.lookup(model.id, providerHintsFromModel(model));
+}
+
+export function buildModelsDevModelMetadataIndex(value: unknown): ModelMetadataIndex {
+	return new ModelMetadataIndex(readModelsDevEntries(value));
+}
+
+export function buildModelsDevModelMetadataLookup(value: unknown): ModelMetadataLookup {
+	const index = buildModelsDevModelMetadataIndex(value);
 	return (model) => index.lookup(model.id, providerHintsFromModel(model));
 }
 
@@ -155,7 +164,7 @@ export function providerHintsFromModel(model: ProviderModelWithId): string[] {
 	return uniqueStrings(hints);
 }
 
-function readBaseLlmEntries(value: unknown): CatalogEntry[] {
+function readProviderCatalogEntries(value: unknown): CatalogEntry[] {
 	const root = asRecord(value);
 	if (!root) {
 		return [];
@@ -188,6 +197,56 @@ function readBaseLlmEntries(value: unknown): CatalogEntry[] {
 				limits,
 			});
 		}
+	}
+
+	return entries;
+}
+
+function readModelsDevEntries(value: unknown): CatalogEntry[] {
+	const root = asRecord(value);
+	if (!root) {
+		return [];
+	}
+
+	const providers = asRecord(root.providers);
+	const modelOnly = asRecord(root.models);
+	if (providers || modelOnly) {
+		return [
+			...readProviderCatalogEntries(providers),
+			...readModelOnlyCatalogEntries(modelOnly),
+		];
+	}
+
+	const providerEntries = readProviderCatalogEntries(root);
+	return providerEntries.length > 0 ? providerEntries : readModelOnlyCatalogEntries(root);
+}
+
+function readModelOnlyCatalogEntries(value: unknown): CatalogEntry[] {
+	const models = asRecord(value);
+	if (!models) {
+		return [];
+	}
+
+	const entries: CatalogEntry[] = [];
+	for (const [modelKey, modelValue] of Object.entries(models)) {
+		const model = asRecord(modelValue);
+		if (!model) {
+			continue;
+		}
+		const limits = extractModelTokenLimits(model);
+		if (!limits) {
+			continue;
+		}
+
+		const modelId = stringValue(model.id) ?? modelKey;
+		const providerId = modelId.includes('/') ? (modelId.split('/')[0] ?? '') : '';
+		entries.push({
+			modelId,
+			modelName: stringValue(model.name),
+			providerAliases: providerAliases(providerId),
+			providerId,
+			limits,
+		});
 	}
 
 	return entries;

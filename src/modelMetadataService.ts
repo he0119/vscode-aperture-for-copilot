@@ -1,11 +1,12 @@
-import { DEFAULT_MODEL_METADATA_URL, MODEL_METADATA_FETCH_TIMEOUT_MS } from './constants';
+import { MODEL_METADATA_FETCH_TIMEOUT_MS } from './constants';
 import { getModelMetadataSource, getModelMetadataUrl } from './config';
 import { logger } from './logger';
 import {
 	buildBaseLlmModelMetadataIndex,
+	buildModelsDevModelMetadataIndex,
 	providerHintsFromModel,
 } from './modelMetadata';
-import type { ModelMetadataLookup } from './types';
+import type { ModelMetadataLookup, ModelMetadataSource } from './types';
 
 export class ModelMetadataService {
 	private cachedKey: string | undefined;
@@ -23,12 +24,13 @@ export class ModelMetadataService {
 	}
 
 	async getLookup(): Promise<ModelMetadataLookup | undefined> {
-		if (getModelMetadataSource() === 'off') {
+		const source = getModelMetadataSource();
+		if (source === 'off') {
 			return undefined;
 		}
 
 		const url = getModelMetadataUrl();
-		const key = `basellm:${url}`;
+		const key = `${source}:${url}`;
 		if (this.cachedKey === key) {
 			return this.cachedLookup;
 		}
@@ -37,7 +39,7 @@ export class ModelMetadataService {
 		}
 
 		this.pendingKey = key;
-		this.pendingLookup = this.loadBaseLlmLookup(url).finally(() => {
+		this.pendingLookup = this.loadLookup(source, url).finally(() => {
 			this.pendingKey = undefined;
 			this.pendingLookup = undefined;
 		});
@@ -47,21 +49,25 @@ export class ModelMetadataService {
 		return lookup;
 	}
 
-	private async loadBaseLlmLookup(url: string): Promise<ModelMetadataLookup | undefined> {
+	private async loadLookup(
+		source: Exclude<ModelMetadataSource, 'off'>,
+		url: string,
+	): Promise<ModelMetadataLookup | undefined> {
 		try {
 			const body = await fetchJson(url, this.userAgent);
-			const index = buildBaseLlmModelMetadataIndex(body);
+			const index =
+				source === 'modelsdev'
+					? buildModelsDevModelMetadataIndex(body)
+					: buildBaseLlmModelMetadataIndex(body);
 			if (index.size === 0) {
-				logger.warn(`BaseLLM metadata did not contain usable model limits from ${url}`);
+				logger.warn(`${source} metadata did not contain usable model limits from ${url}`);
 				return undefined;
 			}
-			logger.debug(`Loaded ${index.size} BaseLLM model metadata entries from ${url}`);
+			logger.debug(`Loaded ${index.size} ${source} model metadata entries from ${url}`);
 			return (model) => index.lookup(model.id, providerHintsFromModel(model));
 		} catch (error) {
-			logger.warn('Failed to load BaseLLM model metadata', error);
-			if (url !== DEFAULT_MODEL_METADATA_URL) {
-				logger.debug(`Configured BaseLLM metadata URL was ${url}`);
-			}
+			logger.warn(`Failed to load ${source} model metadata`, error);
+			logger.debug(`Configured ${source} metadata URL was ${url}`);
 			return undefined;
 		}
 	}

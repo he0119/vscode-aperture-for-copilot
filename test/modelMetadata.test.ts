@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
 	buildBaseLlmModelMetadataIndex,
+	buildModelsDevModelMetadataIndex,
 	extractModelTokenLimits,
 	resolveModelTokenLimits,
 } from '../src/modelMetadata';
@@ -21,7 +22,7 @@ test('extractModelTokenLimits reads input-specific limits before context limits'
 	});
 });
 
-test('BaseLlmModelMetadataIndex matches provider-prefixed model IDs', () => {
+test('model metadata index matches provider-prefixed model IDs', () => {
 	const index = buildBaseLlmModelMetadataIndex({
 		deepseek: {
 			id: 'deepseek',
@@ -45,7 +46,7 @@ test('BaseLlmModelMetadataIndex matches provider-prefixed model IDs', () => {
 	});
 });
 
-test('BaseLlmModelMetadataIndex prefers matching providers when IDs collide', () => {
+test('model metadata index prefers matching providers when IDs collide', () => {
 	const index = buildBaseLlmModelMetadataIndex({
 		openai: {
 			id: 'openai',
@@ -72,6 +73,57 @@ test('BaseLlmModelMetadataIndex prefers matching providers when IDs collide', ()
 	assert.deepEqual(index.lookup('gpt-4o', ['Proxy']), {
 		maxInputTokens: 64_000,
 		maxOutputTokens: 8_192,
+	});
+});
+
+test('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () => {
+	const index = buildModelsDevModelMetadataIndex({
+		'openai/gpt-5': {
+			id: 'openai/gpt-5',
+			name: 'GPT-5',
+			limit: {
+				context: 400_000,
+				input: 272_000,
+				output: 128_000,
+			},
+		},
+	});
+
+	assert.deepEqual(index.lookup('gpt-5', ['OpenAI']), {
+		maxInputTokens: 272_000,
+		maxOutputTokens: 128_000,
+	});
+});
+
+test('buildModelsDevModelMetadataIndex reads models.dev catalog.json shape', () => {
+	const index = buildModelsDevModelMetadataIndex({
+		providers: {
+			proxy: {
+				id: 'proxy',
+				name: 'Proxy',
+				models: {
+					'gpt-5': {
+						id: 'gpt-5',
+						limit: { context: 100_000, output: 16_000 },
+					},
+				},
+			},
+		},
+		models: {
+			'openai/gpt-5': {
+				id: 'openai/gpt-5',
+				limit: { context: 400_000, input: 272_000, output: 128_000 },
+			},
+		},
+	});
+
+	assert.deepEqual(index.lookup('gpt-5', ['Proxy']), {
+		maxInputTokens: 100_000,
+		maxOutputTokens: 16_000,
+	});
+	assert.deepEqual(index.lookup('gpt-5', ['OpenAI']), {
+		maxInputTokens: 272_000,
+		maxOutputTokens: 128_000,
 	});
 });
 
