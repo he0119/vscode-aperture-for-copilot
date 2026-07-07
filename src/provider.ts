@@ -11,15 +11,19 @@ import { ApertureClient } from './client';
 import { logger } from './logger';
 import { ModelService } from './modelService';
 import { convertMessages, convertTools } from './openaiConvert';
-import type { ApertureModel, ChatCompletionRequest, ThinkingEffort, ToolCall, Usage } from './types';
+import {
+	getReasoningEffortOptions,
+	normalizeThinkingSelection,
+	shouldSendReasoningEffort,
+	type ThinkingSelection,
+} from './reasoning';
+import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from './types';
 import { createUserAgent } from './userAgent';
 
 type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions & {
 	readonly modelConfiguration?: Record<string, unknown>;
 	readonly configuration?: Record<string, unknown>;
 };
-
-type ThinkingSelection = ThinkingEffort | 'auto';
 
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 	private readonly models: ModelService;
@@ -188,7 +192,7 @@ function buildRequest(
 					thinking: {
 						type: thinkingEnabled ? 'enabled' : 'disabled',
 					},
-					...(thinkingEffort === 'high' || thinkingEffort === 'max'
+					...(shouldSendReasoningEffort(model, thinkingEffort)
 						? { reasoning_effort: thinkingEffort }
 						: {}),
 				}
@@ -211,25 +215,21 @@ function toChatInformation(model: ApertureModel): vscode.LanguageModelChatInform
 			toolCalling: model.toolCalling,
 			imageInput: false,
 		},
-		...(model.thinking ? { configurationSchema: buildThinkingEffortSchema() } : {}),
+		...(model.thinking ? { configurationSchema: buildThinkingEffortSchema(model) } : {}),
 	};
 	return info as vscode.LanguageModelChatInformation;
 }
 
-function buildThinkingEffortSchema() {
+function buildThinkingEffortSchema(model: ApertureModel) {
+	const options = getReasoningEffortOptions(model);
 	return {
 		properties: {
 			reasoningEffort: {
 				type: 'string',
-				title: 'Reasoning Effort',
-				enum: ['auto', 'none', 'high', 'max'],
-				enumItemLabels: ['Auto', 'None', 'High', 'Max'],
-				enumDescriptions: [
-					'Enable thinking and let the provider choose the effort.',
-					'Disable thinking parameters.',
-					'Send reasoning_effort: high.',
-					'Send reasoning_effort: max.',
-				],
+				title: 'Reasoning',
+				enum: options.map((option) => option.value),
+				enumItemLabels: options.map((option) => option.label),
+				enumDescriptions: options.map((option) => option.description),
 				default: 'auto',
 				group: 'navigation',
 			},
@@ -239,10 +239,7 @@ function buildThinkingEffortSchema() {
 
 function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingSelection {
 	const value = options.modelConfiguration?.reasoningEffort ?? options.configuration?.reasoningEffort;
-	if (value === 'auto' || value === 'none' || value === 'high' || value === 'max') {
-		return value;
-	}
-	return 'auto';
+	return normalizeThinkingSelection(value);
 }
 
 function createThinkingPart(content: string): vscode.LanguageModelResponsePart {

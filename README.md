@@ -79,7 +79,10 @@
 - `tool_call: false` 会禁用该自动模型的工具调用。
 - `reasoning: true` 会自动启用 thinking 控制。
 
-thinking 模型会向 Copilot 暴露请求级 `reasoningEffort` 选项。默认 `auto` 只启用 thinking，让上游模型自行决定强度；选择 `high` 或 `max` 时才会额外发送 `reasoning_effort`。
+thinking 模型会向 Copilot 暴露请求级 `reasoningEffort` 选项。当前在 models.dev 提供结构化 reasoning 选项前（见 [anomalyco/models.dev#314](https://github.com/anomalyco/models.dev/issues/314)），扩展按模型临时决定可选项：
+
+- DeepSeek 模型显示 `auto`、`none`、`high`、`max`；选择 `high` 或 `max` 时会额外发送 `reasoning_effort`。
+- 其他 reasoning 模型只显示开/关；默认 `auto` 只启用 thinking，让上游模型自行决定强度。
 
 如果不希望扩展访问外部 metadata，可设置：
 
