@@ -1,0 +1,210 @@
+{
+  "name": "aperture-for-copilot",
+  "displayName": "Aperture for Copilot Chat",
+  "description": "Expose OpenAI-compatible Aperture models inside the GitHub Copilot Chat model picker.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/local/aperture-for-copilot"
+  },
+  "engines": {
+    "vscode": "^1.116.0",
+    "node": ">=24"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "aperture",
+    "copilot",
+    "github copilot",
+    "copilot chat",
+    "openai compatible",
+    "language model",
+    "reasoning",
+    "tool calling"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:aperture-copilot.setBaseUrl",
+    "onCommand:aperture-copilot.refreshModels",
+    "onCommand:aperture-copilot.setApiKey",
+    "onCommand:aperture-copilot.clearApiKey",
+    "onCommand:aperture-copilot.openSettings",
+    "onCommand:aperture-copilot.showLogs"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "aperture",
+        "displayName": "Aperture"
+      }
+    ],
+    "commands": [
+      {
+        "command": "aperture-copilot.setBaseUrl",
+        "title": "Aperture: Set Base URL"
+      },
+      {
+        "command": "aperture-copilot.refreshModels",
+        "title": "Aperture: Refresh Models"
+      },
+      {
+        "command": "aperture-copilot.setApiKey",
+        "title": "Aperture: Set API Key"
+      },
+      {
+        "command": "aperture-copilot.clearApiKey",
+        "title": "Aperture: Clear API Key"
+      },
+      {
+        "command": "aperture-copilot.openSettings",
+        "title": "Aperture: Open Settings"
+      },
+      {
+        "command": "aperture-copilot.showLogs",
+        "title": "Aperture: Show Logs"
+      }
+    ],
+    "configuration": {
+      "title": "Aperture for Copilot",
+      "properties": {
+        "aperture-copilot.baseUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "OpenAI-compatible Aperture base URL. Bare origins are normalized to `/v1`, for example `https://ai.long-antares.ts.net` becomes `https://ai.long-antares.ts.net/v1`."
+        },
+        "aperture-copilot.modelSource": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "manual"
+          ],
+          "enumDescriptions": [
+            "Fetch `${baseUrl}/models` and expose the deduplicated result.",
+            "Use only the models configured in `aperture-copilot.models`."
+          ],
+          "description": "Where the extension should get model definitions."
+        },
+        "aperture-copilot.enabledModelIds": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional allow-list for auto-discovered model IDs. Leave empty to expose every deduplicated model."
+        },
+        "aperture-copilot.models": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable VS Code model ID shown to Copilot."
+              },
+              "apiModelId": {
+                "type": "string",
+                "description": "Model ID sent to the Aperture API. Defaults to `id`."
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name in the Copilot model picker."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Short detail text in the Copilot model picker."
+              },
+              "maxInputTokens": {
+                "type": "number",
+                "minimum": 1,
+                "description": "Advertised input context window."
+              },
+              "maxOutputTokens": {
+                "type": "number",
+                "minimum": 1,
+                "description": "Advertised maximum output tokens."
+              },
+              "toolCalling": {
+                "type": [
+                  "boolean",
+                  "number"
+                ],
+                "description": "Whether tool calling is supported. A number also acts as the per-request tool limit."
+              },
+              "thinking": {
+                "type": "boolean",
+                "description": "Whether to expose Copilot reasoning-effort controls and send thinking parameters."
+              }
+            }
+          },
+          "description": "Manual model definitions used when `modelSource` is `manual`."
+        },
+        "aperture-copilot.thinkingModelIds": {
+          "type": "array",
+          "default": [
+            "deepseek-v4-flash",
+            "deepseek-v4-pro",
+            "deepseek-ai/DeepSeek-V4-Flash"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Model IDs that should receive DeepSeek-compatible thinking parameters in auto mode."
+        },
+        "aperture-copilot.maxTokens": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Optional output token limit. Use 0 to let the endpoint decide."
+        },
+        "aperture-copilot.toolLimit": {
+          "type": "number",
+          "default": 128,
+          "minimum": 1,
+          "description": "Maximum number of tools to send in one request."
+        },
+        "aperture-copilot.debugMode": {
+          "type": "string",
+          "default": "minimal",
+          "enum": [
+            "minimal",
+            "metadata",
+            "verbose"
+          ],
+          "enumDescriptions": [
+            "Only log high-level lifecycle and error messages.",
+            "Log model refreshes, request metadata, and usage.",
+            "Log request metadata and raw stream chunks. Avoid with sensitive prompts."
+          ],
+          "description": "Diagnostic logging level."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('out', { recursive: true, force: true })\"",
+    "vscode:prepublish": "npm run compile",
+    "compile": "npm run clean && tsc -p ./",
+    "watch": "npm run clean && tsc -watch -p ./",
+    "test": "npm run compile && node --test \"out/test/**/*.js\"",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "@types/vscode": "^1.116.0",
+    "@vscode/vsce": "^3.9.1",
+    "typescript": "^6.0.0"
+  }
+}
