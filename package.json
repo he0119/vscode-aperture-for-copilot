@@ -8,7 +8,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/he0119/aperture-for-copilot.git"
+    "url": "https://github.com/he0119/vscode-aperture-for-copilot.git"
   },
   "engines": {
     "vscode": "^1.116.0",
@@ -30,13 +30,7 @@
     "tool calling"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:aperture-copilot.setBaseUrl",
-    "onCommand:aperture-copilot.refreshModels",
-    "onCommand:aperture-copilot.setApiKey",
-    "onCommand:aperture-copilot.clearApiKey",
-    "onCommand:aperture-copilot.openSettings",
-    "onCommand:aperture-copilot.showLogs"
+    "onStartupFinished"
   ],
   "main": "./out/src/extension.js",
   "contributes": {
