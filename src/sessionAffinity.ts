@@ -6,6 +6,9 @@ import type { ChatMessage, ToolCall } from './types';
 // VS Code does not currently expose an official Copilot Chat conversation id
 // through LanguageModelChatProvider. These keys are best-effort compatibility
 // hooks for runtimes that may pass a stable id through private or future fields.
+// TODO: Replace the fallback transcript matching with options.chatSessionResource
+// once VS Code exposes it to LanguageModelChatProvider.
+// See https://github.com/microsoft/vscode/issues/305853.
 const SESSION_OPTION_KEYS = ['sessionId', 'chatSessionId', 'conversationId'] as const;
 
 // Keep the fallback state bounded. Each entry is only a hashed transcript
