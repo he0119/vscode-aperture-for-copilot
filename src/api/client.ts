@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { buildEndpointUrl } from '../config/url';
 import { logger } from '../runtime/logger';
 import { OpenAIStreamParser, type StreamEvent } from './streamParser';
-import type { ChatCompletionRequest, StreamCallbacks } from '../shared/types';
+import type { ChatCompletionRequest, StreamCallbacks } from './types';
 
 export class ApertureClient {
 	constructor(

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
-import { SessionAffinityManager } from '../../src/runtime/sessionAffinity';
+import { SessionAffinityManager } from '../../src/provider/sessionAffinity';
 
 describe('SessionAffinityManager', () => {
 	it('prefers runtime session IDs from provider options', () => {

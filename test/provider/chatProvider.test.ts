@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
 import { ApertureChatProvider } from '../../src/provider/chatProvider';
-import type { ChatCompletionRequest } from '../../src/shared/types';
+import type { ChatCompletionRequest } from '../../src/api/types';
 import { resetApertureConfig, updateApertureConfig } from '../helpers/config';
 
 const originalFetch = globalThis.fetch;

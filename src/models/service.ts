@@ -10,7 +10,7 @@ import {
 import { logger } from '../runtime/logger';
 import { ModelMetadataService } from './metadataService';
 import { buildAutoModels, buildManualModels } from './registry';
-import type { ApertureModel, ModelsResponse } from '../shared/types';
+import type { ApertureModel, ModelsResponse } from './types';
 
 export class ModelService {
 	private cachedKey: string | undefined;

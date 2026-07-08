@@ -10,7 +10,7 @@ import type {
 	ModelMetadataLookup,
 	ManualModelConfig,
 	ModelsResponse,
-} from '../shared/types';
+} from './types';
 
 export interface BuildAutoModelsOptions {
 	enabledModelIds: readonly string[];

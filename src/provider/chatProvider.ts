@@ -17,8 +17,10 @@ import {
 	shouldSendReasoningEffort,
 	type ThinkingSelection,
 } from './reasoning';
-import { SessionAffinityManager } from '../runtime/sessionAffinity';
-import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from '../shared/types';
+import { SessionAffinityManager } from './sessionAffinity';
+import type { ChatTranscriptToolCall } from '../chat/transcript';
+import type { ChatCompletionRequest, ToolCall, Usage } from '../api/types';
+import type { ApertureModel } from '../models/types';
 import { createUserAgent } from '../runtime/userAgent';
 
 type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions & {
@@ -165,7 +167,7 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 					sessionAffinity.recordAssistantResponse({
 						content: responseContent.join(''),
 						reasoning: responseReasoning.join(''),
-						toolCalls: responseToolCalls,
+						toolCalls: responseToolCalls.map(toTranscriptToolCall),
 					});
 				},
 				onError: (error) => {
@@ -290,6 +292,14 @@ function createToolCallPart(toolCall: ToolCall): vscode.LanguageModelToolCallPar
 		input = {};
 	}
 	return new vscode.LanguageModelToolCallPart(toolCall.id, toolCall.function.name, input);
+}
+
+function toTranscriptToolCall(toolCall: ToolCall): ChatTranscriptToolCall {
+	return {
+		id: toolCall.id,
+		name: toolCall.function.name,
+		argumentsJson: toolCall.function.arguments,
+	};
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

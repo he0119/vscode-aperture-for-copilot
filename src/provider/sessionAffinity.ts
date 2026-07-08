@@ -1,7 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
-import { convertMessages } from '../api/openaiConvert';
-import type { ChatMessage, ToolCall } from '../shared/types';
+import {
+	normalizeChatTranscript,
+	type ChatTranscriptMessage,
+	type ChatTranscriptToolCall,
+} from '../chat/transcript';
 
 // VS Code does not currently expose an official Copilot Chat conversation id
 // through LanguageModelChatProvider. These keys are best-effort compatibility
@@ -27,7 +30,7 @@ type SessionAffinityOptions = vscode.ProvideLanguageModelChatResponseOptions & {
 export interface AssistantAffinityResponse {
 	readonly content: string;
 	readonly reasoning: string;
-	readonly toolCalls: readonly ToolCall[];
+	readonly toolCalls: readonly ChatTranscriptToolCall[];
 }
 
 export interface SessionAffinityAssignment {
@@ -61,9 +64,7 @@ export class SessionAffinityManager {
 			};
 		}
 
-		// Convert to the same OpenAI-compatible shape used by the request body so
-		// the fallback matching follows the actual transcript sent upstream.
-		const requestMessages = convertMessages(messages, true);
+		const requestMessages = normalizeChatTranscript(messages, { includeReasoning: true });
 
 		// A root request with only the user's first message must be treated as a
 		// new conversation every time. Storing that root fingerprint would make
@@ -89,7 +90,7 @@ export class SessionAffinityManager {
 		};
 	}
 
-	private findAffinity(messages: readonly ChatMessage[]): string | undefined {
+	private findAffinity(messages: readonly ChatTranscriptMessage[]): string | undefined {
 		// Only histories containing an assistant/tool turn can be matched. Plain
 		// first-user-message requests are always considered new conversations.
 		if (!hasConversationHistory(messages)) {
@@ -110,7 +111,7 @@ export class SessionAffinityManager {
 		return undefined;
 	}
 
-	private remember(messages: readonly ChatMessage[], affinity: string): void {
+	private remember(messages: readonly ChatTranscriptMessage[], affinity: string): void {
 		if (messages.length === 0) {
 			return;
 		}
@@ -158,7 +159,9 @@ function getRuntimeSession(
 	return undefined;
 }
 
-function createAssistantMessage(response: AssistantAffinityResponse): ChatMessage | undefined {
+function createAssistantMessage(
+	response: AssistantAffinityResponse,
+): ChatTranscriptMessage | undefined {
 	// Empty streamed responses cannot help identify a future turn, so skip them.
 	if (!response.content && response.toolCalls.length === 0) {
 		return undefined;
@@ -167,18 +170,18 @@ function createAssistantMessage(response: AssistantAffinityResponse): ChatMessag
 	return {
 		role: 'assistant',
 		content: response.content,
-		...(response.reasoning ? { reasoning_content: response.reasoning } : {}),
-		...(response.toolCalls.length > 0 ? { tool_calls: [...response.toolCalls] } : {}),
+		...(response.reasoning ? { reasoning: response.reasoning } : {}),
+		...(response.toolCalls.length > 0 ? { toolCalls: [...response.toolCalls] } : {}),
 	};
 }
 
-function fingerprintMessages(messages: readonly ChatMessage[]): string {
+function fingerprintMessages(messages: readonly ChatTranscriptMessage[]): string {
 	// Store only a hash of the transcript. This avoids keeping prompt text in
 	// the affinity cache while still giving deterministic lookup keys.
 	return hashSessionAffinity(JSON.stringify(messages));
 }
 
-function hasConversationHistory(messages: readonly ChatMessage[]): boolean {
+function hasConversationHistory(messages: readonly ChatTranscriptMessage[]): boolean {
 	return messages.some((message) => message.role === 'assistant' || message.role === 'tool');
 }
 

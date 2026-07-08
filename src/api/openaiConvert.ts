@@ -1,75 +1,16 @@
 import * as vscode from 'vscode';
-import type { ChatMessage, ChatTool, ToolCall } from '../shared/types';
+import {
+	normalizeChatTranscript,
+	type ChatTranscriptMessage,
+	type ChatTranscriptToolCall,
+} from '../chat/transcript';
+import type { ChatMessage, ChatTool, ToolCall } from './types';
 
 export function convertMessages(
 	messages: readonly vscode.LanguageModelChatRequestMessage[],
 	includeReasoning: boolean,
 ): ChatMessage[] {
-	const result: ChatMessage[] = [];
-
-	for (const message of messages) {
-		const role = mapRole(message.role);
-		let content = '';
-		let reasoning = '';
-		const toolCalls: ToolCall[] = [];
-		const toolResults: Array<{ callId: string; content: string }> = [];
-
-		for (const part of message.content) {
-			if (part instanceof vscode.LanguageModelTextPart) {
-				content += part.value;
-				continue;
-			}
-
-			if (isThinkingPart(part)) {
-				reasoning += normalizeThinkingValue(part.value);
-				continue;
-			}
-
-			if (part instanceof vscode.LanguageModelToolCallPart) {
-				toolCalls.push({
-					id: part.callId,
-					type: 'function',
-					function: {
-						name: part.name,
-						arguments: safeJson(part.input),
-					},
-				});
-				continue;
-			}
-
-			if (part instanceof vscode.LanguageModelToolResultPart) {
-				toolResults.push({
-					callId: part.callId,
-					content: collectToolResultText(part),
-				});
-			}
-		}
-
-		if (role === 'assistant') {
-			if (content || toolCalls.length > 0) {
-				const assistant: ChatMessage = { role: 'assistant', content };
-				if (toolCalls.length > 0) {
-					assistant.tool_calls = toolCalls;
-				}
-				if (includeReasoning && reasoning) {
-					assistant.reasoning_content = reasoning;
-				}
-				result.push(assistant);
-			}
-		} else if (content) {
-			result.push({ role, content });
-		}
-
-		for (const toolResult of toolResults) {
-			result.push({
-				role: 'tool',
-				content: toolResult.content,
-				tool_call_id: toolResult.callId,
-			});
-		}
-	}
-
-	return result;
+	return normalizeChatTranscript(messages, { includeReasoning }).map(toChatMessage);
 }
 
 export function convertTools(
@@ -89,47 +30,30 @@ export function convertTools(
 	}));
 }
 
-function mapRole(role: vscode.LanguageModelChatMessageRole): 'user' | 'assistant' | 'system' {
-	if (role === vscode.LanguageModelChatMessageRole.Assistant) {
-		return 'assistant';
+function toChatMessage(message: ChatTranscriptMessage): ChatMessage {
+	const result: ChatMessage = {
+		role: message.role,
+		content: message.content,
+	};
+	if (message.toolCallId) {
+		result.tool_call_id = message.toolCallId;
 	}
-
-	const systemRole = 3;
-	if ((role as number) === systemRole) {
-		return 'system';
+	if (message.toolCalls && message.toolCalls.length > 0) {
+		result.tool_calls = message.toolCalls.map(toToolCall);
 	}
-
-	return 'user';
+	if (message.reasoning) {
+		result.reasoning_content = message.reasoning;
+	}
+	return result;
 }
 
-function collectToolResultText(part: vscode.LanguageModelToolResultPart): string {
-	let content = '';
-	for (const item of part.content) {
-		if (item instanceof vscode.LanguageModelTextPart) {
-			content += item.value;
-		}
-	}
-	return content || safeJson(part.content);
-}
-
-function isThinkingPart(part: unknown): part is { value: string | string[] } {
-	return (
-		typeof part === 'object' &&
-		part !== null &&
-		'value' in part &&
-		typeof (part as { constructor?: { name?: string } }).constructor?.name === 'string' &&
-		(part as { constructor: { name: string } }).constructor.name.includes('Thinking')
-	);
-}
-
-function normalizeThinkingValue(value: string | string[]): string {
-	return Array.isArray(value) ? value.join('') : value;
-}
-
-function safeJson(value: unknown): string {
-	try {
-		return JSON.stringify(value);
-	} catch {
-		return String(value);
-	}
+function toToolCall(toolCall: ChatTranscriptToolCall): ToolCall {
+	return {
+		id: toolCall.id,
+		type: 'function',
+		function: {
+			name: toolCall.name,
+			arguments: toolCall.argumentsJson,
+		},
+	};
 }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import type { ChatCompletionRequest, StreamCallbacks } from '../../src/shared/types';
+import type { ChatCompletionRequest, StreamCallbacks } from '../../src/api/types';
 import { ApertureClient } from '../../src/api/client';
 
 const originalFetch = globalThis.fetch;

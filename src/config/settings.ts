@@ -5,7 +5,7 @@ import {
 	DEFAULT_TOOL_LIMIT,
 } from '../shared/constants';
 import { normalizeBaseUrl } from './url';
-import type { DebugMode, ManualModelConfig, ModelSource } from '../shared/types';
+import type { DebugMode, ManualModelConfig, ModelSource } from './types';
 
 export function getConfiguredBaseUrl(): string | undefined {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('baseUrl');

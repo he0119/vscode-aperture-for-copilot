@@ -2,7 +2,7 @@ import { MODEL_METADATA_FETCH_TIMEOUT_MS } from '../shared/constants';
 import { getModelMetadataUrl } from '../config/settings';
 import { logger } from '../runtime/logger';
 import { buildModelsDevModelMetadataIndex, providerHintsFromModel } from './metadata';
-import type { ModelMetadataLookup } from '../shared/types';
+import type { ModelMetadataLookup } from './types';
 
 export class ModelMetadataService {
 	private cachedKey: string | undefined;
