@@ -24,7 +24,7 @@ describe('ApertureClient', () => {
 	}) as typeof fetch;
 
 	const events: unknown[] = [];
-	const client = new ApertureClient('https://aperture.example.com/root', 'agent/1');
+	const client = new ApertureClient('https://aperture.example.com/root', 'agent/1', 'session-1');
 	await client.streamChatCompletion(sampleRequest(), callbacksFor(events), token());
 
 	assert.equal(capturedUrl, 'https://aperture.example.com/root/v1/chat/completions');
@@ -32,6 +32,7 @@ describe('ApertureClient', () => {
 	assert.deepEqual(capturedInit?.headers, {
 		'Content-Type': 'application/json',
 		'User-Agent': 'agent/1',
+		'X-Session-Affinity': 'session-1',
 	});
 	assert.deepEqual(JSON.parse(String(capturedInit?.body)), {
 		model: 'model-a',
@@ -51,7 +52,7 @@ describe('ApertureClient', () => {
 		new Response('not authorized', { status: 401 })) as typeof fetch;
 
 	const errors: Error[] = [];
-	const client = new ApertureClient('https://aperture.example.com', 'agent/1');
+	const client = new ApertureClient('https://aperture.example.com', 'agent/1', 'session-1');
 	await client.streamChatCompletion(
 		sampleRequest(),
 		{

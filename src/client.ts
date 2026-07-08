@@ -8,6 +8,7 @@ export class ApertureClient {
 	constructor(
 		private readonly baseUrl: string,
 		private readonly userAgent: string,
+		private readonly sessionAffinity: string,
 	) {}
 
 	async streamChatCompletion(
@@ -81,6 +82,7 @@ export class ApertureClient {
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
 			'User-Agent': this.userAgent,
+			'X-Session-Affinity': this.sessionAffinity,
 		};
 		return headers;
 	}

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
 import { ApertureChatProvider } from '../src/provider';
 import type { ChatCompletionRequest } from '../src/types';
@@ -91,9 +92,11 @@ describe('ApertureChatProvider', () => {
 			maxTokens: 99,
 		});
 		let capturedUrl = '';
+		let capturedHeaders: HeadersInit | undefined;
 		let capturedRequest: ChatCompletionRequest | undefined;
 		globalThis.fetch = (async (url, init) => {
 			capturedUrl = String(url);
+			capturedHeaders = init?.headers;
 			capturedRequest = JSON.parse(String(init?.body)) as ChatCompletionRequest;
 			return sseResponse([
 				'data: {"choices":[{"delta":{"reasoning_content":"think"},"finish_reason":null}]}',
@@ -113,12 +116,17 @@ describe('ApertureChatProvider', () => {
 				tools: [tool('lookup')],
 				toolMode: vscode.LanguageModelChatToolMode.Auto,
 				modelConfiguration: { reasoningEffort: 'high' },
+				sessionId: 'chat-session-1',
 			} as vscode.ProvideLanguageModelChatResponseOptions,
 			{ report: (part) => reported.push(part) },
 			cancellationToken(),
 		);
 
 		assert.equal(capturedUrl, 'https://aperture.example.com/v1/chat/completions');
+		assert.equal(
+			getHeader(capturedHeaders, 'X-Session-Affinity'),
+			expectedAffinity('runtime:sessionId:chat-session-1'),
+		);
 		assert.deepEqual(capturedRequest, {
 			model: 'deepseek-api',
 			messages: [{ role: 'user', content: 'hello' }],
@@ -234,6 +242,17 @@ function cancellationToken(): vscode.CancellationToken {
 	const source = new vscode.CancellationTokenSource();
 	providerSubscriptions.push([source]);
 	return source.token;
+}
+
+function expectedAffinity(value: string): string {
+	return createHash('sha256').update(value).digest('base64url').slice(0, 32);
+}
+
+function getHeader(headers: HeadersInit | undefined, name: string): string | undefined {
+	if (!headers || Array.isArray(headers) || headers instanceof Headers) {
+		return headers instanceof Headers ? (headers.get(name) ?? undefined) : undefined;
+	}
+	return headers[name];
 }
 
 function configurationSchema(info: vscode.LanguageModelChatInformation): {

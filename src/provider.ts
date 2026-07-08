@@ -17,6 +17,7 @@ import {
 	shouldSendReasoningEffort,
 	type ThinkingSelection,
 } from './reasoning';
+import { SessionAffinityManager } from './sessionAffinity';
 import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from './types';
 import { createUserAgent } from './userAgent';
 
@@ -28,6 +29,7 @@ type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions 
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 	private readonly models: ModelService;
 	private readonly userAgent: string;
+	private readonly sessionAffinities = new SessionAffinityManager();
 	private readonly onDidChangeLanguageModelChatInformationEmitter = new vscode.EventEmitter<void>();
 	private active = true;
 
@@ -131,16 +133,41 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 		}
 
 		const request = buildRequest(model, messages, options);
-		const client = new ApertureClient(baseUrl, this.userAgent);
+		const sessionAffinity = this.sessionAffinities.begin(messages, options);
+		const client = new ApertureClient(baseUrl, this.userAgent, sessionAffinity.value);
+
+		// Keep a copy of streamed assistant output while still reporting each
+		// chunk immediately to VS Code. The completed assistant message is used
+		// only to reconnect the next turn to the same fallback affinity.
+		const responseContent: string[] = [];
+		const responseReasoning: string[] = [];
+		const responseToolCalls: ToolCall[] = [];
 
 		await client.streamChatCompletion(
 			request,
 			{
-				onContent: (content) => progress.report(new vscode.LanguageModelTextPart(content)),
-				onReasoning: (content) => progress.report(createThinkingPart(content)),
-				onToolCall: (toolCall) => progress.report(createToolCallPart(toolCall)),
+				onContent: (content) => {
+					responseContent.push(content);
+					progress.report(new vscode.LanguageModelTextPart(content));
+				},
+				onReasoning: (content) => {
+					responseReasoning.push(content);
+					progress.report(createThinkingPart(content));
+				},
+				onToolCall: (toolCall) => {
+					responseToolCalls.push(toolCall);
+					progress.report(createToolCallPart(toolCall));
+				},
 				onUsage: (usage) => reportUsage(progress, usage),
-				onDone: () => undefined,
+				onDone: () => {
+					// Commit the transcript only after the stream reaches [DONE]; a
+					// failed or cancelled request should not become follow-up history.
+					sessionAffinity.recordAssistantResponse({
+						content: responseContent.join(''),
+						reasoning: responseReasoning.join(''),
+						toolCalls: responseToolCalls,
+					});
+				},
 				onError: (error) => {
 					throw error;
 				},
