@@ -3,7 +3,7 @@
   "displayName": "Aperture for Copilot Chat",
   "description": "Expose OpenAI-compatible Aperture models inside the GitHub Copilot Chat model picker.",
   "icon": "images/icon.png",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "he0119",
   "license": "MIT",
   "repository": {
