@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as vscode from 'vscode';
-import { convertMessages, convertTools } from '../src/openaiConvert';
+import { convertMessages, convertTools } from '../../src/api/openaiConvert';
 
 class LanguageModelThinkingPart {
 	constructor(readonly value: string | string[]) {}

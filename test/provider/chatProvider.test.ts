@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
-import { ApertureChatProvider } from '../src/provider';
-import type { ChatCompletionRequest } from '../src/types';
-import { resetApertureConfig, updateApertureConfig } from './helpers/config';
+import { ApertureChatProvider } from '../../src/provider/chatProvider';
+import type { ChatCompletionRequest } from '../../src/shared/types';
+import { resetApertureConfig, updateApertureConfig } from '../helpers/config';
 
 const originalFetch = globalThis.fetch;
 const providerSubscriptions: vscode.Disposable[][] = [];

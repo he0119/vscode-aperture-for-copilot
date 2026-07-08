@@ -3,9 +3,9 @@ import {
 	CONFIG_SECTION,
 	DEFAULT_MODELS_DEV_MODEL_METADATA_URL,
 	DEFAULT_TOOL_LIMIT,
-} from './constants';
-import { normalizeBaseUrl } from './configCore';
-import type { DebugMode, ManualModelConfig, ModelSource } from './types';
+} from '../shared/constants';
+import { normalizeBaseUrl } from './url';
+import type { DebugMode, ManualModelConfig, ModelSource } from '../shared/types';
 
 export function getConfiguredBaseUrl(): string | undefined {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('baseUrl');

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildAutoModels, buildManualModels } from '../src/modelRegistry';
+import { buildAutoModels, buildManualModels } from '../../src/models/registry';
 
 describe('modelRegistry', () => {
 	it('buildAutoModels deduplicates model IDs and keeps the first provider', () => {

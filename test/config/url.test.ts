@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { buildEndpointUrl, normalizeBaseUrl } from '../src/configCore';
+import { buildEndpointUrl, normalizeBaseUrl } from '../../src/config/url';
 
-describe('configCore', () => {
+describe('config/url', () => {
 	it('normalizeBaseUrl handles empty input', () => {
 		assert.equal(normalizeBaseUrl(''), undefined);
 		assert.equal(normalizeBaseUrl('   '), undefined);

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getDebugMode } from './config';
+import { getDebugMode } from '../config/settings';
 
 class Logger {
 	private readonly channel = vscode.window.createOutputChannel('Aperture for Copilot');

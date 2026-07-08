@@ -1,4 +1,4 @@
-import type { ToolCall, Usage } from './types';
+import type { ToolCall, Usage } from '../shared/types';
 
 export type StreamEvent =
 	| { type: 'content'; value: string }

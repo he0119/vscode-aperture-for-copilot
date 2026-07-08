@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
-import { convertMessages } from './openaiConvert';
-import type { ChatMessage, ToolCall } from './types';
+import { convertMessages } from '../api/openaiConvert';
+import type { ChatMessage, ToolCall } from '../shared/types';
 
 // VS Code does not currently expose an official Copilot Chat conversation id
 // through LanguageModelChatProvider. These keys are best-effort compatibility

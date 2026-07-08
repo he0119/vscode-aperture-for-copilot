@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { OpenAIStreamParser } from '../src/streamParser';
+import { OpenAIStreamParser } from '../../src/api/streamParser';
 
 describe('OpenAIStreamParser', () => {
 	it('parses content, reasoning, usage, and done', () => {

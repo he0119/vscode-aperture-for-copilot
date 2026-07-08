@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ChatMessage, ChatTool, ToolCall } from './types';
+import type { ChatMessage, ChatTool, ToolCall } from '../shared/types';
 
 export function convertMessages(
 	messages: readonly vscode.LanguageModelChatRequestMessage[],

@@ -1,4 +1,4 @@
-import { buildEndpointUrl } from './configCore';
+import { buildEndpointUrl } from '../config/url';
 import {
 	getConfiguredBaseUrl,
 	getEnabledModelIds,
@@ -6,11 +6,11 @@ import {
 	getModelMetadataUrl,
 	getModelSource,
 	getToolLimit,
-} from './config';
-import { logger } from './logger';
-import { ModelMetadataService } from './modelMetadataService';
-import { buildAutoModels, buildManualModels } from './modelRegistry';
-import type { ApertureModel, ModelsResponse } from './types';
+} from '../config/settings';
+import { logger } from '../runtime/logger';
+import { ModelMetadataService } from './metadataService';
+import { buildAutoModels, buildManualModels } from './registry';
+import type { ApertureModel, ModelsResponse } from '../shared/types';
 
 export class ModelService {
 	private cachedKey: string | undefined;

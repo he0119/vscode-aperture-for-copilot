@@ -4,7 +4,7 @@ import type {
 	ModelMetadata,
 	ModelMetadataLookup,
 	ModelTokenLimits,
-} from './types';
+} from '../shared/types';
 
 type ProviderModelWithId = ApertureProviderModel & { id: string };
 

@@ -4,7 +4,7 @@ import {
 	normalizeThinkingSelection,
 	shouldSendReasoningEffort,
 	supportsReasoningEffort,
-} from '../src/reasoning';
+} from '../../src/provider/reasoning';
 
 describe('reasoning', () => {
 	it('getReasoningEffortOptions exposes effort levels for DeepSeek models', () => {

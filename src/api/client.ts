@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { buildEndpointUrl } from './configCore';
-import { logger } from './logger';
+import { buildEndpointUrl } from '../config/url';
+import { logger } from '../runtime/logger';
 import { OpenAIStreamParser, type StreamEvent } from './streamParser';
-import type { ChatCompletionRequest, StreamCallbacks } from './types';
+import type { ChatCompletionRequest, StreamCallbacks } from '../shared/types';
 
 export class ApertureClient {
 	constructor(

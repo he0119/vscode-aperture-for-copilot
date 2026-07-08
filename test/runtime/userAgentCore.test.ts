@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { formatUserAgent } from '../src/userAgentCore';
+import { formatUserAgent } from '../../src/runtime/userAgentCore';
 
 describe('userAgentCore', () => {
 	it('formatUserAgent includes extension, VS Code, Node, and platform details', () => {

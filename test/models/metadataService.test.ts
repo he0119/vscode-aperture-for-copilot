@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { ModelMetadataService } from '../src/modelMetadataService';
-import { resetApertureConfig, updateApertureConfig } from './helpers/config';
+import { ModelMetadataService } from '../../src/models/metadataService';
+import { resetApertureConfig, updateApertureConfig } from '../helpers/config';
 
 const originalFetch = globalThis.fetch;
 

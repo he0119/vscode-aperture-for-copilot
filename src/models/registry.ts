@@ -2,15 +2,15 @@ import {
 	DEFAULT_MAX_INPUT_TOKENS,
 	DEFAULT_MAX_OUTPUT_TOKENS,
 	DEFAULT_TOOL_LIMIT,
-} from './constants';
-import { resolveModelMetadata } from './modelMetadata';
+} from '../shared/constants';
+import { resolveModelMetadata } from './metadata';
 import type {
 	ApertureModel,
 	ApertureProviderModel,
 	ModelMetadataLookup,
 	ManualModelConfig,
 	ModelsResponse,
-} from './types';
+} from '../shared/types';
 
 export interface BuildAutoModelsOptions {
 	enabledModelIds: readonly string[];

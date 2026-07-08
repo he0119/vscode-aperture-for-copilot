@@ -4,7 +4,7 @@ import {
 	extractModelTokenLimits,
 	resolveModelMetadata,
 	resolveModelTokenLimits,
-} from '../src/modelMetadata';
+} from '../../src/models/metadata';
 
 describe('modelMetadata', () => {
 	it('extractModelTokenLimits reads input-specific limits before context limits', () => {

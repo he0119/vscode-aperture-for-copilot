@@ -1,8 +1,8 @@
-import { MODEL_METADATA_FETCH_TIMEOUT_MS } from './constants';
-import { getModelMetadataUrl } from './config';
-import { logger } from './logger';
-import { buildModelsDevModelMetadataIndex, providerHintsFromModel } from './modelMetadata';
-import type { ModelMetadataLookup } from './types';
+import { MODEL_METADATA_FETCH_TIMEOUT_MS } from '../shared/constants';
+import { getModelMetadataUrl } from '../config/settings';
+import { logger } from '../runtime/logger';
+import { buildModelsDevModelMetadataIndex, providerHintsFromModel } from './metadata';
+import type { ModelMetadataLookup } from '../shared/types';
 
 export class ModelMetadataService {
 	private cachedKey: string | undefined;

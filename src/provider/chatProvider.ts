@@ -4,22 +4,22 @@ import {
 	getMaxTokens,
 	getToolLimit,
 	updateConfiguredBaseUrl,
-} from './config';
-import { normalizeBaseUrl } from './configCore';
-import { CONFIG_SECTION, PROVIDER_VENDOR, USAGE_DATA_PART_MIME } from './constants';
-import { ApertureClient } from './client';
-import { logger } from './logger';
-import { ModelService } from './modelService';
-import { convertMessages, convertTools } from './openaiConvert';
+} from '../config/settings';
+import { normalizeBaseUrl } from '../config/url';
+import { CONFIG_SECTION, PROVIDER_VENDOR, USAGE_DATA_PART_MIME } from '../shared/constants';
+import { ApertureClient } from '../api/client';
+import { logger } from '../runtime/logger';
+import { ModelService } from '../models/service';
+import { convertMessages, convertTools } from '../api/openaiConvert';
 import {
 	getReasoningEffortOptions,
 	normalizeThinkingSelection,
 	shouldSendReasoningEffort,
 	type ThinkingSelection,
 } from './reasoning';
-import { SessionAffinityManager } from './sessionAffinity';
-import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from './types';
-import { createUserAgent } from './userAgent';
+import { SessionAffinityManager } from '../runtime/sessionAffinity';
+import type { ApertureModel, ChatCompletionRequest, ToolCall, Usage } from '../shared/types';
+import { createUserAgent } from '../runtime/userAgent';
 
 type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions & {
 	readonly modelConfiguration?: Record<string, unknown>;

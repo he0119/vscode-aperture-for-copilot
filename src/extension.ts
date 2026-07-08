@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { ApertureChatProvider } from './provider';
-import { logger } from './logger';
+import { ApertureChatProvider } from './provider/chatProvider';
+import { logger } from './runtime/logger';
 
 let provider: ApertureChatProvider | undefined;
 

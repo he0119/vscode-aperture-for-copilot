@@ -1,4 +1,4 @@
-import type { ApertureModel, ThinkingEffort } from './types';
+import type { ApertureModel, ThinkingEffort } from '../shared/types';
 
 export type ThinkingSelection = ThinkingEffort | 'auto';
 
