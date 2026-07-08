@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
 import { buildAutoModels, buildManualModels } from '../src/modelRegistry';
 
-test('buildAutoModels deduplicates model IDs and keeps the first provider', () => {
+describe('modelRegistry', () => {
+	it('buildAutoModels deduplicates model IDs and keeps the first provider', () => {
 	const models = buildAutoModels(
 		{
 			data: [
@@ -34,7 +34,7 @@ test('buildAutoModels deduplicates model IDs and keeps the first provider', () =
 	assert.equal(models[1]?.thinking, false);
 });
 
-test('buildAutoModels honors enabled model allow-list', () => {
+	it('buildAutoModels honors enabled model allow-list', () => {
 	const models = buildAutoModels(
 		{
 			data: [{ id: 'a' }, { id: 'b' }],
@@ -52,7 +52,7 @@ test('buildAutoModels honors enabled model allow-list', () => {
 	assert.equal(models[0]?.toolCalling, 64);
 });
 
-test('buildAutoModels uses provider limits before external metadata', () => {
+	it('buildAutoModels uses provider limits before external metadata', () => {
 	const models = buildAutoModels(
 		{
 			data: [
@@ -82,7 +82,7 @@ test('buildAutoModels uses provider limits before external metadata', () => {
 	assert.equal(models[1]?.maxOutputTokens, 384_000);
 });
 
-test('buildAutoModels uses external capability metadata', () => {
+	it('buildAutoModels uses external capability metadata', () => {
 	const models = buildAutoModels(
 		{
 			data: [
@@ -110,7 +110,7 @@ test('buildAutoModels uses external capability metadata', () => {
 	assert.equal(models[1]?.toolCalling, false);
 });
 
-test('buildManualModels maps apiModelId and defaults display fields', () => {
+	it('buildManualModels maps apiModelId and defaults display fields', () => {
 	const models = buildManualModels(
 		[
 			{
@@ -129,4 +129,5 @@ test('buildManualModels maps apiModelId and defaults display fields', () => {
 	assert.equal(models[0]?.name, 'picker-id');
 	assert.equal(models[0]?.toolCalling, false);
 	assert.equal(models[0]?.thinking, true);
+});
 });

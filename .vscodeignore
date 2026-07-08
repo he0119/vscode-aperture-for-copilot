@@ -1,6 +1,9 @@
 .git/**
 .github/**
 .vscode/**
+.vscode-test.js
+.vscode-test/**
+coverage/**
 .gitignore
 .vscodeignore
 node_modules/**
