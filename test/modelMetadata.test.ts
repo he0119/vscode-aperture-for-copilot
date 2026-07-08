@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
 import {
 	buildModelsDevModelMetadataIndex,
 	extractModelTokenLimits,
@@ -7,7 +6,8 @@ import {
 	resolveModelTokenLimits,
 } from '../src/modelMetadata';
 
-test('extractModelTokenLimits reads input-specific limits before context limits', () => {
+describe('modelMetadata', () => {
+	it('extractModelTokenLimits reads input-specific limits before context limits', () => {
 	const limits = extractModelTokenLimits({
 		limit: {
 			context: 400_000,
@@ -22,7 +22,7 @@ test('extractModelTokenLimits reads input-specific limits before context limits'
 	});
 });
 
-test('model metadata index matches provider-prefixed model IDs', () => {
+	it('model metadata index matches provider-prefixed model IDs', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		deepseek: {
 			id: 'deepseek',
@@ -46,7 +46,7 @@ test('model metadata index matches provider-prefixed model IDs', () => {
 	});
 });
 
-test('model metadata index prefers matching providers when IDs collide', () => {
+	it('model metadata index prefers matching providers when IDs collide', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		openai: {
 			id: 'openai',
@@ -76,7 +76,7 @@ test('model metadata index prefers matching providers when IDs collide', () => {
 	});
 });
 
-test('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () => {
+	it('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		'deepseek/deepseek-v4-flash': {
 			id: 'deepseek/deepseek-v4-flash',
@@ -99,7 +99,7 @@ test('buildModelsDevModelMetadataIndex reads models.dev models.json shape', () =
 	});
 });
 
-test('buildModelsDevModelMetadataIndex treats generic reasoning models as thinking-capable', () => {
+	it('buildModelsDevModelMetadataIndex treats generic reasoning models as thinking-capable', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		'meituan/longcat-2.0': {
 			id: 'meituan/longcat-2.0',
@@ -122,7 +122,7 @@ test('buildModelsDevModelMetadataIndex treats generic reasoning models as thinki
 	});
 });
 
-test('buildModelsDevModelMetadataIndex reads models.dev catalog.json shape', () => {
+	it('buildModelsDevModelMetadataIndex reads models.dev catalog.json shape', () => {
 	const index = buildModelsDevModelMetadataIndex({
 		providers: {
 			proxy: {
@@ -154,7 +154,7 @@ test('buildModelsDevModelMetadataIndex reads models.dev catalog.json shape', () 
 	});
 });
 
-test('resolveModelTokenLimits keeps provider fields ahead of catalog metadata', () => {
+	it('resolveModelTokenLimits keeps provider fields ahead of catalog metadata', () => {
 	const limits = resolveModelTokenLimits(
 		{
 			id: 'gpt-4o',
@@ -173,7 +173,7 @@ test('resolveModelTokenLimits keeps provider fields ahead of catalog metadata', 
 	});
 });
 
-test('resolveModelMetadata keeps provider capabilities ahead of catalog metadata', () => {
+	it('resolveModelMetadata keeps provider capabilities ahead of catalog metadata', () => {
 	const metadata = resolveModelMetadata(
 		{
 			id: 'gpt-4o',
@@ -187,4 +187,5 @@ test('resolveModelMetadata keeps provider capabilities ahead of catalog metadata
 
 	assert.equal(metadata.thinking, true);
 	assert.equal(metadata.toolCalling, false);
+});
 });
