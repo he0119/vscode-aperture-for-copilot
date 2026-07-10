@@ -2,37 +2,50 @@ import assert from 'node:assert/strict';
 import { buildAutoModels, buildManualModels } from '../../src/models/registry';
 
 describe('modelRegistry', () => {
-	it('buildAutoModels deduplicates model IDs and keeps the first provider', () => {
-	const models = buildAutoModels(
-		{
-			data: [
-				{
-					id: 'deepseek-v4-flash',
-					metadata: { provider: { name: 'DeepSeek' } },
-					pricing: { input: '0.1', output: '0.2' },
-				},
-				{
-					id: 'deepseek-v4-flash',
-					metadata: { provider: { name: 'DeepSeek mirror' } },
-				},
-				{
-					id: 'gemini-2.5-pro',
-					metadata: { provider: { name: 'Google AI Studio' } },
-				},
-			],
-		},
-		{
-			enabledModelIds: [],
-			toolLimit: 128,
-		},
-	);
+	it('buildAutoModels deduplicates model IDs and aggregates routable providers', () => {
+		const models = buildAutoModels(
+			{
+				data: [
+					{
+						id: 'deepseek-v4-flash',
+						metadata: { provider: { id: 'deepseek', name: 'DeepSeek' } },
+						pricing: { input: '0.1', output: '0.2' },
+					},
+					{
+						id: 'deepseek-v4-flash',
+						metadata: { provider: { id: 'mirror' } },
+					},
+					{
+						id: 'deepseek-v4-flash',
+						metadata: { provider: { id: 'mirror', name: 'Duplicate mirror' } },
+					},
+					{
+						id: 'deepseek-v4-flash',
+						metadata: { provider: { name: 'Missing ID' } },
+					},
+					{
+						id: 'gemini-2.5-pro',
+						metadata: { provider: { id: 'google', name: 'Google AI Studio' } },
+					},
+				],
+			},
+			{
+				enabledModelIds: [],
+				toolLimit: 128,
+			},
+		);
 
-	assert.equal(models.length, 2);
-	assert.equal(models[0]?.id, 'deepseek-v4-flash');
-	assert.match(models[0]?.detail ?? '', /DeepSeek/u);
-	assert.equal(models[0]?.thinking, false);
-	assert.equal(models[1]?.thinking, false);
-});
+		assert.equal(models.length, 2);
+		assert.equal(models[0]?.id, 'deepseek-v4-flash');
+		assert.equal(models[0]?.detail, '2 providers available');
+		assert.deepEqual(models[0]?.providers, [
+			{ id: 'deepseek', name: 'DeepSeek' },
+			{ id: 'mirror', name: 'mirror' },
+		]);
+		assert.deepEqual(models[1]?.providers, [{ id: 'google', name: 'Google AI Studio' }]);
+		assert.equal(models[0]?.thinking, false);
+		assert.equal(models[1]?.thinking, false);
+	});
 
 	it('buildAutoModels honors enabled model allow-list', () => {
 	const models = buildAutoModels(

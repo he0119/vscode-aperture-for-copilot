@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 自动读取 `${baseUrl}/v1/models`，并按模型 ID 去重。
+- 自动读取 `${baseUrl}/v1/models`，按模型 ID 去重，并为具有多个 provider 的模型提供路由选择。
 - 自动从模型列表字段或 models.dev `models.json` 补齐上下文、最大输出 token 和能力标记。
 - 支持通过 `aperture-copilot.models` 手动定义模型。
 - 将 OpenAI-compatible 的流式 chat completions 输出到 Copilot Chat。
@@ -40,6 +40,8 @@
    扩展会在调用 OpenAI-compatible API 时自动追加 `/v1`，因此不要把 base URL 写成 `http://<aperture-hostname>/v1`。
 
 4. 打开 Copilot Chat，并在模型选择器里选择 Aperture 模型。
+
+如果自动发现的同一个模型由多个 provider 提供，模型配置中会出现 `Provider` 下拉框。默认的 `Automatic` 保留 Aperture 自动路由；选择具体 provider 后，请求会使用 `providerId/modelId` 固定路由。该选项仅适用于自动发现模型。
 
 ## 常用设置
 

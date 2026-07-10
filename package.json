@@ -74,7 +74,7 @@
             "manual"
           ],
           "enumDescriptions": [
-            "Fetch `${baseUrl}/v1/models` and expose the deduplicated result.",
+            "Fetch `${baseUrl}/v1/models`, deduplicate models, and expose provider choices when available.",
             "Use only the models configured in `aperture-copilot.models`."
           ],
           "description": "Where the extension should get model definitions."

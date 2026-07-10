@@ -28,6 +28,9 @@ type ModelConfigurationOptions = vscode.ProvideLanguageModelChatResponseOptions 
 	readonly configuration?: Record<string, unknown>;
 };
 
+const AUTOMATIC_PROVIDER = 'auto';
+const PROVIDER_OPTION_PREFIX = 'provider:';
+
 export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 	private readonly models: ModelService;
 	private readonly userAgent: string;
@@ -210,7 +213,7 @@ function buildRequest(
 	const thinkingEffort = getConfiguredThinkingEffort(options as ModelConfigurationOptions);
 	const thinkingEnabled = thinkingEffort !== 'none';
 	return {
-		model: model.apiModelId,
+		model: getRequestModelId(model, options as ModelConfigurationOptions),
 		messages: convertMessages(messages, model.thinking),
 		stream: true,
 		tools,
@@ -230,6 +233,7 @@ function buildRequest(
 }
 
 function toChatInformation(model: ApertureModel): vscode.LanguageModelChatInformation {
+	const configurationSchema = buildModelConfigurationSchema(model);
 	const info = {
 		id: model.id,
 		name: model.name,
@@ -244,31 +248,82 @@ function toChatInformation(model: ApertureModel): vscode.LanguageModelChatInform
 			toolCalling: model.toolCalling,
 			imageInput: false,
 		},
-		...(model.thinking ? { configurationSchema: buildThinkingEffortSchema(model) } : {}),
+		...(configurationSchema ? { configurationSchema } : {}),
 	};
 	return info as vscode.LanguageModelChatInformation;
 }
 
-function buildThinkingEffortSchema(model: ApertureModel) {
-	const options = getReasoningEffortOptions(model);
+function buildModelConfigurationSchema(model: ApertureModel) {
+	const properties: Record<string, unknown> = {};
+	const providers = model.providers ?? [];
+	if (providers.length >= 2) {
+		properties.provider = {
+			type: 'string',
+			title: 'Provider',
+			enum: [AUTOMATIC_PROVIDER, ...providers.map((provider) => `${PROVIDER_OPTION_PREFIX}${provider.id}`)],
+			enumItemLabels: ['Automatic', ...providers.map((provider) => provider.name)],
+			enumDescriptions: [
+				'Let Aperture choose the provider.',
+				...providers.map((provider) => `Route through ${provider.id}.`),
+			],
+			default: AUTOMATIC_PROVIDER,
+			group: 'navigation',
+		};
+	}
+
+	if (model.thinking) {
+		const options = getReasoningEffortOptions(model);
+		properties.reasoningEffort = {
+			type: 'string',
+			title: 'Reasoning',
+			enum: options.map((option) => option.value),
+			enumItemLabels: options.map((option) => option.label),
+			enumDescriptions: options.map((option) => option.description),
+			default: 'auto',
+			group: 'navigation',
+		};
+	}
+
+	if (Object.keys(properties).length === 0) {
+		return undefined;
+	}
 	return {
-		properties: {
-			reasoningEffort: {
-				type: 'string',
-				title: 'Reasoning',
-				enum: options.map((option) => option.value),
-				enumItemLabels: options.map((option) => option.label),
-				enumDescriptions: options.map((option) => option.description),
-				default: 'auto',
-				group: 'navigation',
-			},
-		},
+		properties,
 	} as const;
 }
 
 function getConfiguredThinkingEffort(options: ModelConfigurationOptions): ThinkingSelection {
-	const value = options.modelConfiguration?.reasoningEffort ?? options.configuration?.reasoningEffort;
+	const value = getModelOption(options, 'reasoningEffort');
 	return normalizeThinkingSelection(value);
+}
+
+function getRequestModelId(model: ApertureModel, options: ModelConfigurationOptions): string {
+	const selection = getModelOption(options, 'provider');
+	if (selection === undefined || selection === AUTOMATIC_PROVIDER) {
+		return model.apiModelId;
+	}
+	if (typeof selection !== 'string' || !selection.startsWith(PROVIDER_OPTION_PREFIX)) {
+		throw new Error(`Invalid provider selection for Aperture model "${model.id}".`);
+	}
+
+	const providerId = selection.slice(PROVIDER_OPTION_PREFIX.length);
+	if (!model.providers?.some((provider) => provider.id === providerId)) {
+		throw new Error(`Provider "${providerId}" is not available for Aperture model "${model.id}".`);
+	}
+	return `${providerId}/${model.apiModelId}`;
+}
+
+function getModelOption(options: ModelConfigurationOptions, name: string): unknown {
+	for (const source of [
+		options.modelOptions,
+		options.modelConfiguration,
+		options.configuration,
+	]) {
+		if (source && Object.prototype.hasOwnProperty.call(source, name)) {
+			return source[name];
+		}
+	}
+	return undefined;
 }
 
 function createThinkingPart(content: string): vscode.LanguageModelResponsePart {

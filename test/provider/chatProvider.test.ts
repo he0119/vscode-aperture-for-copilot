@@ -56,6 +56,7 @@ describe('ApertureChatProvider', () => {
 			configurationSchema(info[0]).properties.reasoningEffort.enum,
 			['auto', 'none', 'high', 'max'],
 		);
+		assert.equal(configurationSchema(info[0]).properties.provider, undefined);
 
 		assert.equal(await provider.provideTokenCount(info[0]!, '12345', cancellationToken()), 2);
 		assert.equal(
@@ -174,6 +175,81 @@ describe('ApertureChatProvider', () => {
 		});
 	});
 
+	it('exposes provider choices for duplicate auto models and routes requests', async () => {
+		await updateApertureConfig({
+			baseUrl: 'https://aperture.example.com',
+			modelSource: 'auto',
+			modelMetadataUrl: 'https://metadata.example.com/models.json',
+		});
+		const capturedModels: string[] = [];
+		globalThis.fetch = (async (url, init) => {
+			if (String(url).endsWith('/v1/models')) {
+				return jsonResponse({
+					data: [
+						{
+							id: 'shared-model',
+							thinking: true,
+							metadata: { provider: { id: 'primary', name: 'Primary' } },
+						},
+						{
+							id: 'shared-model',
+							metadata: { provider: { id: 'backup', name: 'Backup' } },
+						},
+						{
+							id: 'single-model',
+							metadata: { provider: { id: 'only', name: 'Only' } },
+						},
+					],
+				});
+			}
+			if (String(url) === 'https://metadata.example.com/models.json') {
+				return jsonResponse({});
+			}
+			capturedModels.push((JSON.parse(String(init?.body)) as ChatCompletionRequest).model);
+			return sseResponse(['data: [DONE]', '']);
+		}) as typeof fetch;
+		const provider = createProvider();
+
+		const info = await provider.provideLanguageModelChatInformation(
+			{ silent: false },
+			cancellationToken(),
+		);
+		assert.equal(info.length, 2);
+		const shared = info.find((model) => model.id === 'shared-model')!;
+		const schema = configurationSchema(shared);
+		assert.deepEqual(schema.properties.provider.enum, [
+			'auto',
+			'provider:primary',
+			'provider:backup',
+		]);
+		assert.deepEqual(schema.properties.provider.enumItemLabels, [
+			'Automatic',
+			'Primary',
+			'Backup',
+		]);
+		assert.equal(schema.properties.provider.default, 'auto');
+		assert.deepEqual(schema.properties.reasoningEffort.enum, ['auto', 'none']);
+		assert.equal(
+			(info.find((model) => model.id === 'single-model') as unknown as { configurationSchema?: unknown })
+				.configurationSchema,
+			undefined,
+		);
+
+		await sendRequest(provider, shared, { modelOptions: { provider: 'provider:backup' } });
+		await sendRequest(provider, shared, { modelConfiguration: { provider: 'auto' } });
+		await sendRequest(provider, shared, { configuration: { provider: 'provider:primary' } });
+		assert.deepEqual(capturedModels, ['backup/shared-model', 'shared-model', 'primary/shared-model']);
+
+		await assert.rejects(
+			() => sendRequest(provider, shared, { modelOptions: { provider: 'provider:removed' } }),
+			/Provider "removed" is not available/u,
+		);
+		await assert.rejects(
+			() => sendRequest(provider, shared, { modelOptions: { provider: null } }),
+			/Invalid provider selection/u,
+		);
+	});
+
 	it('rejects missing configuration, unavailable models, and excessive tools', async () => {
 		await updateApertureConfig({
 			modelSource: 'manual',
@@ -256,11 +332,30 @@ function getHeader(headers: HeadersInit | undefined, name: string): string | und
 }
 
 function configurationSchema(info: vscode.LanguageModelChatInformation): {
-	properties: { reasoningEffort: { enum: string[] } };
+	properties: Record<string, { enum: string[]; enumItemLabels?: string[]; default?: string }>;
 } {
 	return (info as unknown as {
-		configurationSchema: { properties: { reasoningEffort: { enum: string[] } } };
+		configurationSchema: {
+			properties: Record<string, { enum: string[]; enumItemLabels?: string[]; default?: string }>;
+		};
 	}).configurationSchema;
+}
+
+async function sendRequest(
+	provider: ApertureChatProvider,
+	model: vscode.LanguageModelChatInformation,
+	options: Record<string, unknown>,
+): Promise<void> {
+	await provider.provideLanguageModelChatResponse(
+		model,
+		[vscode.LanguageModelChatMessage.User('hello')],
+		{
+			toolMode: vscode.LanguageModelChatToolMode.Auto,
+			...options,
+		} as vscode.ProvideLanguageModelChatResponseOptions,
+		{ report: () => undefined },
+		cancellationToken(),
+	);
 }
 
 function tool(name: string): vscode.LanguageModelChatTool {
@@ -280,4 +375,11 @@ function sseResponse(lines: readonly string[]): Response {
 		},
 	});
 	return new Response(body, { status: 200 });
+}
+
+function jsonResponse(value: unknown): Response {
+	return new Response(JSON.stringify(value), {
+		headers: { 'Content-Type': 'application/json' },
+		status: 200,
+	});
 }

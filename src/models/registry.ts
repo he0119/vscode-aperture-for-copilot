@@ -6,6 +6,7 @@ import {
 import { resolveModelMetadata } from './metadata';
 import type {
 	ApertureModel,
+	ApertureModelProvider,
 	ApertureProviderModel,
 	ModelMetadataLookup,
 	ManualModelConfig,
@@ -26,23 +27,34 @@ export function buildAutoModels(
 ): ApertureModel[] {
 	const data = Array.isArray(response.data) ? response.data : [];
 	const enabled = new Set(options.enabledModelIds);
-	const seen = new Set<string>();
 	const models: ApertureModel[] = [];
+	const modelsById = new Map<string, ApertureModel>();
+	const providersByModel = new Map<string, ApertureModelProvider[]>();
+	const providerIdsByModel = new Map<string, Set<string>>();
 
 	for (const item of data) {
 		const model = toProviderModel(item);
 		if (!model) {
 			continue;
 		}
-		if (seen.has(model.id)) {
-			continue;
-		}
 		if (enabled.size > 0 && !enabled.has(model.id)) {
 			continue;
 		}
-		seen.add(model.id);
+
+		const existing = modelsById.get(model.id);
+		if (existing) {
+			appendProvider(
+				providersByModel.get(model.id)!,
+				providerIdsByModel.get(model.id)!,
+				model,
+			);
+			continue;
+		}
+
 		const metadata = resolveModelMetadata(model, options.metadataLookup);
-		models.push({
+		const providers: ApertureModelProvider[] = [];
+		const providerIds = new Set<string>();
+		const registered: ApertureModel = {
 			id: model.id,
 			apiModelId: model.id,
 			name: model.id,
@@ -53,10 +65,46 @@ export function buildAutoModels(
 			maxOutputTokens: metadata.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
 			toolCalling: normalizeAutoToolCalling(metadata.toolCalling, options.toolLimit),
 			thinking: metadata.thinking === true,
-		});
+			providers,
+		};
+		appendProvider(providers, providerIds, model);
+		models.push(registered);
+		modelsById.set(model.id, registered);
+		providersByModel.set(model.id, providers);
+		providerIdsByModel.set(model.id, providerIds);
+	}
+
+	for (const model of models) {
+		if ((model.providers?.length ?? 0) >= 2) {
+			model.detail = `${model.providers!.length} providers available`;
+		}
 	}
 
 	return models;
+}
+
+function appendProvider(
+	providers: ApertureModelProvider[],
+	seenProviderIds: Set<string>,
+	model: ApertureProviderModel,
+): void {
+	const provider = providerIdentity(model);
+	if (!provider || seenProviderIds.has(provider.id)) {
+		return;
+	}
+	seenProviderIds.add(provider.id);
+	providers.push(provider);
+}
+
+function providerIdentity(model: ApertureProviderModel): ApertureModelProvider | undefined {
+	const id = stringValue(model.metadata?.provider?.id);
+	if (!id) {
+		return undefined;
+	}
+	return {
+		id,
+		name: stringValue(model.metadata?.provider?.name) ?? id,
+	};
 }
 
 export function buildManualModels(

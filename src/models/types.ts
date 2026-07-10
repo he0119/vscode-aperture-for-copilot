@@ -13,6 +13,12 @@ export interface ApertureModel {
 	maxOutputTokens: number;
 	toolCalling: boolean | number;
 	thinking: boolean;
+	providers?: readonly ApertureModelProvider[];
+}
+
+export interface ApertureModelProvider {
+	id: string;
+	name: string;
 }
 
 export interface ModelTokenLimits {
