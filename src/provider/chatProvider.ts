@@ -255,7 +255,7 @@ function buildThinkingEffortSchema(model: ApertureModel) {
 		properties: {
 			reasoningEffort: {
 				type: 'string',
-				title: 'Reasoning',
+				title: 'Thinking Effort',
 				enum: options.map((option) => option.value),
 				enumItemLabels: options.map((option) => option.label),
 				enumDescriptions: options.map((option) => option.description),
