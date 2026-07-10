@@ -16,12 +16,12 @@ type ReasoningModelIdentity = Pick<ApertureModel, 'id' | 'apiModelId' | 'family'
 const TOGGLE_OPTIONS: readonly ReasoningEffortOption[] = [
 	{
 		value: 'auto',
-		label: 'On',
+		label: 'Auto',
 		description: 'Enable thinking and let the provider choose the effort.',
 	},
 	{
 		value: 'none',
-		label: 'Off',
+		label: 'None',
 		description: 'Disable thinking parameters.',
 	},
 ];
