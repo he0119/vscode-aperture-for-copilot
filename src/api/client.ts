@@ -3,6 +3,9 @@ import { buildEndpointUrl } from '../config/url';
 import { logger } from '../runtime/logger';
 import { OpenAIStreamParser, type StreamEvent } from './streamParser';
 import type { ChatCompletionRequest, StreamCallbacks } from './types';
+import type { ApiProtocol } from '../config/types';
+import { buildProtocolRequest } from './protocol';
+import { AnthropicStreamParser, ResponsesStreamParser } from './streamParser';
 
 export class ApertureClient {
 	constructor(
@@ -15,6 +18,7 @@ export class ApertureClient {
 		request: ChatCompletionRequest,
 		callbacks: StreamCallbacks,
 		token: vscode.CancellationToken,
+		protocol: ApiProtocol = 'chat-completions',
 	): Promise<void> {
 		const controller = new AbortController();
 		const cancellation = token.onCancellationRequested(() => controller.abort());
@@ -24,20 +28,18 @@ export class ApertureClient {
 				controller.abort();
 			}
 
-			const requestBody: ChatCompletionRequest = {
-				...request,
-				stream_options: { include_usage: true },
-			};
+			const protocolRequest = buildProtocolRequest(request, protocol);
+			const requestBody = protocolRequest.body;
 			logger.verbose('Aperture request', {
-				model: requestBody.model,
-				messageCount: requestBody.messages.length,
-				toolCount: requestBody.tools?.length ?? 0,
-				thinking: requestBody.thinking,
+				model: request.model,
+				messageCount: request.messages.length,
+				toolCount: request.tools?.length ?? 0,
+				protocol,
 			});
 
-			const response = await fetch(buildEndpointUrl(this.baseUrl, '/chat/completions'), {
+			const response = await fetch(buildEndpointUrl(this.baseUrl, protocolRequest.path), {
 				method: 'POST',
-				headers: this.buildHeaders(),
+				headers: { ...this.buildHeaders(), ...protocolRequest.headers },
 				body: JSON.stringify(requestBody),
 				signal: controller.signal,
 			});
@@ -51,7 +53,7 @@ export class ApertureClient {
 
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
-			const parser = new OpenAIStreamParser();
+			const parser = protocol === 'responses' ? new ResponsesStreamParser() : protocol === 'anthropic-messages' ? new AnthropicStreamParser() : new OpenAIStreamParser();
 
 			while (!token.isCancellationRequested) {
 				const { done, value } = await reader.read();

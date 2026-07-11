@@ -45,6 +45,7 @@ export function buildAutoModels(
 		models.push({
 			id: model.id,
 			apiModelId: model.id,
+			apiProtocol: 'chat-completions',
 			name: model.id,
 			detail: buildModelDetail(model),
 			family: providerText(model) || 'aperture',
@@ -76,6 +77,7 @@ export function buildConfiguredModels(
 		models.push({
 			id,
 			apiModelId,
+			apiProtocol: normalizeApiProtocol(config.apiProtocol),
 			name: config.name?.trim() || id,
 			detail: config.detail?.trim() || 'Aperture configured model',
 			family: 'aperture',
@@ -124,6 +126,10 @@ export function mergeConfiguredModels(
 		models[index] = {
 			...discovered,
 			apiModelId,
+			apiProtocol:
+				config.apiProtocol === undefined
+					? discovered.apiProtocol
+					: normalizeApiProtocol(config.apiProtocol),
 			name: config.name?.trim() || discovered.name,
 			detail: config.detail?.trim() || discovered.detail,
 			version: apiModelId,
@@ -138,6 +144,10 @@ export function mergeConfiguredModels(
 	}
 
 	return models;
+}
+
+function normalizeApiProtocol(value: unknown): ApertureModel['apiProtocol'] {
+	return value === 'responses' || value === 'anthropic-messages' ? value : 'chat-completions';
 }
 
 function toProviderModel(value: unknown): ProviderModelWithId | undefined {

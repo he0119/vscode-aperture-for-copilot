@@ -97,6 +97,17 @@
                 "type": "string",
                 "description": "Model ID sent to the Aperture API. Defaults to `id`."
               },
+              "apiProtocol": {
+                "type": "string",
+                "default": "chat-completions",
+                "enum": ["chat-completions", "responses", "anthropic-messages"],
+                "enumDescriptions": [
+                  "OpenAI Chat Completions API (`/v1/chat/completions`).",
+                  "OpenAI Responses API (`/v1/responses`).",
+                  "Anthropic Messages API (`/v1/messages`)."
+                ],
+                "description": "API protocol used for this model."
+              },
               "name": {
                 "type": "string",
                 "description": "Display name in the Copilot model picker."

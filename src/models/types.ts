@@ -1,10 +1,11 @@
-import type { ModelConfig } from '../config/types';
+import type { ApiProtocol, ModelConfig } from '../config/types';
 
 export type { ModelConfig };
 
 export interface ApertureModel {
 	id: string;
 	apiModelId: string;
+	apiProtocol: ApiProtocol;
 	name: string;
 	detail: string;
 	family: string;

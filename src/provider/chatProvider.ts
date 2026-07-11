@@ -175,6 +175,7 @@ export class ApertureChatProvider implements vscode.LanguageModelChatProvider {
 				},
 			},
 			token,
+			model.apiProtocol,
 		);
 	}
 

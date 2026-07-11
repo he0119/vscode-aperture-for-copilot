@@ -130,9 +130,21 @@ describe('modelRegistry', () => {
 	assert.equal(models.length, 1);
 	assert.equal(models[0]?.id, 'picker-id');
 	assert.equal(models[0]?.apiModelId, 'api-id');
+	assert.equal(models[0]?.apiProtocol, 'chat-completions');
 	assert.equal(models[0]?.name, 'picker-id');
 	assert.equal(models[0]?.toolCalling, false);
 		assert.equal(models[0]?.thinking, true);
+	});
+
+	it('buildConfiguredModels preserves supported API protocols', () => {
+		const models = buildConfiguredModels([
+			{ id: 'responses', apiProtocol: 'responses' },
+			{ id: 'anthropic', apiProtocol: 'anthropic-messages' },
+		]);
+		assert.deepEqual(
+			models.map((model) => model.apiProtocol),
+			['responses', 'anthropic-messages'],
+		);
 	});
 
 	it('mergeConfiguredModels overrides matching IDs and appends missing models', () => {
@@ -147,6 +159,7 @@ describe('modelRegistry', () => {
 				{
 					id: 'k3',
 					apiModelId: 'moonshotai/kimi-k3',
+					apiProtocol: 'responses',
 					name: 'Kimi K3',
 					maxInputTokens: 1_048_576,
 					maxOutputTokens: 131_072,
@@ -163,12 +176,14 @@ describe('modelRegistry', () => {
 		);
 		assert.equal(models[0]?.name, 'Kimi K3');
 		assert.equal(models[0]?.apiModelId, 'moonshotai/kimi-k3');
+		assert.equal(models[0]?.apiProtocol, 'responses');
 		assert.equal(models[0]?.version, 'moonshotai/kimi-k3');
 		assert.equal(models[0]?.maxInputTokens, 1_048_576);
 		assert.equal(models[0]?.maxOutputTokens, 131_072);
 		assert.equal(models[0]?.thinking, true);
 		assert.equal(models[0]?.toolCalling, 128);
 		assert.equal(models[1]?.maxInputTokens, 128_000);
+		assert.equal(models[1]?.apiProtocol, 'chat-completions');
 		assert.equal(models[2]?.toolCalling, false);
 	});
 });
