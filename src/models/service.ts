@@ -1,15 +1,14 @@
 import { buildEndpointUrl } from '../config/url';
 import {
 	getConfiguredBaseUrl,
+	getConfiguredModels,
 	getEnabledModelIds,
-	getManualModels,
 	getModelMetadataUrl,
-	getModelSource,
 	getToolLimit,
 } from '../config/settings';
 import { logger } from '../runtime/logger';
 import { ModelMetadataService } from './metadataService';
-import { buildAutoModels, buildManualModels } from './registry';
+import { buildAutoModels, buildConfiguredModels, mergeConfiguredModels } from './registry';
 import type { ApertureModel, ModelsResponse } from './types';
 
 export class ModelService {
@@ -30,10 +29,9 @@ export class ModelService {
 	async getModels(): Promise<ApertureModel[]> {
 		const key = JSON.stringify({
 			baseUrl: getConfiguredBaseUrl(),
-			source: getModelSource(),
 			metadataUrl: getModelMetadataUrl(),
 			enabled: getEnabledModelIds(),
-			manual: getManualModels(),
+			configured: getConfiguredModels(),
 			toolLimit: getToolLimit(),
 		});
 
@@ -53,14 +51,12 @@ export class ModelService {
 
 	private async loadModels(): Promise<ApertureModel[]> {
 		const toolLimit = getToolLimit();
-		if (getModelSource() === 'manual') {
-			return buildManualModels(getManualModels(), toolLimit);
-		}
+		const configuredModels = getConfiguredModels();
 
 		const baseUrl = getConfiguredBaseUrl();
 		if (!baseUrl) {
 			logger.debug('Aperture base URL is not configured; no auto models available');
-			return [];
+			return buildConfiguredModels(configuredModels, toolLimit);
 		}
 
 		try {
@@ -72,16 +68,17 @@ export class ModelService {
 			}
 			const body = (await response.json()) as ModelsResponse;
 			const metadataLookup = await this.metadata.getLookup();
-			const models = buildAutoModels(body, {
+			const discoveredModels = buildAutoModels(body, {
 				enabledModelIds: getEnabledModelIds(),
 				metadataLookup,
 				toolLimit,
 			});
+			const models = mergeConfiguredModels(discoveredModels, configuredModels, toolLimit);
 			logger.debug(`Loaded ${models.length} Aperture model(s) from ${baseUrl}`);
 			return models;
 		} catch (error) {
 			logger.warn('Failed to load Aperture models', error);
-			return [];
+			return buildConfiguredModels(configuredModels, toolLimit);
 		}
 	}
 }

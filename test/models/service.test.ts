@@ -10,9 +10,8 @@ afterEach(async () => {
 });
 
 describe('ModelService', () => {
-	it('loads manual models from configuration and caches unchanged results', async () => {
+	it('loads configured models without discovery and caches unchanged results', async () => {
 		await updateApertureConfig({
-			modelSource: 'manual',
 			models: [
 				{
 					id: 'picker-id',
@@ -42,9 +41,9 @@ describe('ModelService', () => {
 	it('loads auto models, applies metadata, and honors enabled model IDs', async () => {
 		await updateApertureConfig({
 			baseUrl: 'https://aperture.example.com/root',
-			modelSource: 'auto',
 			modelMetadataUrl: 'https://metadata.example.com/models.json',
 			enabledModelIds: ['deepseek-v4-flash'],
+			models: [{ id: 'deepseek-v4-flash', maxInputTokens: 1_048_576 }],
 			toolLimit: 64,
 		});
 
@@ -93,7 +92,7 @@ describe('ModelService', () => {
 		assert.deepEqual(calls[0]?.headers, { 'User-Agent': 'agent/1' });
 		assert.equal(models.length, 1);
 		assert.equal(models[0]?.id, 'deepseek-v4-flash');
-		assert.equal(models[0]?.maxInputTokens, 1_000_000);
+		assert.equal(models[0]?.maxInputTokens, 1_048_576);
 		assert.equal(models[0]?.maxOutputTokens, 384_000);
 		assert.equal(models[0]?.thinking, true);
 		assert.equal(models[0]?.toolCalling, false);
@@ -101,7 +100,6 @@ describe('ModelService', () => {
 
 	it('returns no auto models when base URL is missing or the request fails', async () => {
 		await updateApertureConfig({
-			modelSource: 'auto',
 		});
 		let fetchCount = 0;
 		globalThis.fetch = (async () => {
@@ -122,6 +120,21 @@ describe('ModelService', () => {
 			new Response('broken', { status: 503 })) as typeof fetch;
 
 		assert.deepEqual(await service.getModels(), []);
+	});
+
+	it('keeps configured models when auto discovery fails', async () => {
+		await updateApertureConfig({
+			baseUrl: 'https://aperture.example.com',
+			models: [{ id: 'fallback', maxInputTokens: 256_000 }],
+		});
+		globalThis.fetch = (async () =>
+			new Response('broken', { status: 503 })) as typeof fetch;
+
+		const models = await new ModelService('agent/1').getModels();
+
+		assert.equal(models.length, 1);
+		assert.equal(models[0]?.id, 'fallback');
+		assert.equal(models[0]?.maxInputTokens, 256_000);
 	});
 });
 

@@ -1,6 +1,6 @@
-import type { ManualModelConfig } from '../config/types';
+import type { ModelConfig } from '../config/types';
 
-export type { ManualModelConfig };
+export type { ModelConfig };
 
 export interface ApertureModel {
 	id: string;

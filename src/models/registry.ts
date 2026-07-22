@@ -7,8 +7,8 @@ import { resolveModelMetadata } from './metadata';
 import type {
 	ApertureModel,
 	ApertureProviderModel,
+	ModelConfig,
 	ModelMetadataLookup,
-	ManualModelConfig,
 	ModelsResponse,
 } from './types';
 
@@ -59,8 +59,8 @@ export function buildAutoModels(
 	return models;
 }
 
-export function buildManualModels(
-	configs: readonly ManualModelConfig[],
+export function buildConfiguredModels(
+	configs: readonly ModelConfig[],
 	toolLimit: number = DEFAULT_TOOL_LIMIT,
 ): ApertureModel[] {
 	const seen = new Set<string>();
@@ -77,7 +77,7 @@ export function buildManualModels(
 			id,
 			apiModelId,
 			name: config.name?.trim() || id,
-			detail: config.detail?.trim() || 'Aperture manual model',
+			detail: config.detail?.trim() || 'Aperture configured model',
 			family: 'aperture',
 			version: apiModelId,
 			maxInputTokens: positiveInteger(config.maxInputTokens) ?? DEFAULT_MAX_INPUT_TOKENS,
@@ -85,6 +85,56 @@ export function buildManualModels(
 			toolCalling: normalizeToolCalling(config.toolCalling, toolLimit),
 			thinking: config.thinking === true,
 		});
+	}
+
+	return models;
+}
+
+export function mergeConfiguredModels(
+	discoveredModels: readonly ApertureModel[],
+	configs: readonly ModelConfig[],
+	toolLimit: number = DEFAULT_TOOL_LIMIT,
+): ApertureModel[] {
+	const models = [...discoveredModels];
+	const indexes = new Map(models.map((model, index) => [model.id, index]));
+	const seen = new Set<string>();
+
+	for (const config of configs) {
+		const id = typeof config.id === 'string' ? config.id.trim() : '';
+		if (!id || seen.has(id)) {
+			continue;
+		}
+		seen.add(id);
+
+		const index = indexes.get(id);
+		if (index === undefined) {
+			const [configured] = buildConfiguredModels([{ ...config, id }], toolLimit);
+			if (configured) {
+				indexes.set(id, models.length);
+				models.push(configured);
+			}
+			continue;
+		}
+
+		const discovered = models[index];
+		if (!discovered) {
+			continue;
+		}
+		const apiModelId = config.apiModelId?.trim() || discovered.apiModelId;
+		models[index] = {
+			...discovered,
+			apiModelId,
+			name: config.name?.trim() || discovered.name,
+			detail: config.detail?.trim() || discovered.detail,
+			version: apiModelId,
+			maxInputTokens: positiveInteger(config.maxInputTokens) ?? discovered.maxInputTokens,
+			maxOutputTokens: positiveInteger(config.maxOutputTokens) ?? discovered.maxOutputTokens,
+			toolCalling:
+				config.toolCalling === undefined
+					? discovered.toolCalling
+					: normalizeToolCalling(config.toolCalling, toolLimit),
+			thinking: config.thinking ?? discovered.thinking,
+		};
 	}
 
 	return models;
