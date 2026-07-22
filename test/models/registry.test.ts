@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
-import { buildAutoModels, buildManualModels } from '../../src/models/registry';
+import {
+	buildAutoModels,
+	buildConfiguredModels,
+	mergeConfiguredModels,
+} from '../../src/models/registry';
 
 describe('modelRegistry', () => {
 	it('buildAutoModels deduplicates model IDs and keeps the first provider', () => {
@@ -110,8 +114,8 @@ describe('modelRegistry', () => {
 	assert.equal(models[1]?.toolCalling, false);
 });
 
-	it('buildManualModels maps apiModelId and defaults display fields', () => {
-	const models = buildManualModels(
+	it('buildConfiguredModels maps apiModelId and defaults display fields', () => {
+	const models = buildConfiguredModels(
 		[
 			{
 				id: 'picker-id',
@@ -128,6 +132,43 @@ describe('modelRegistry', () => {
 	assert.equal(models[0]?.apiModelId, 'api-id');
 	assert.equal(models[0]?.name, 'picker-id');
 	assert.equal(models[0]?.toolCalling, false);
-	assert.equal(models[0]?.thinking, true);
-});
+		assert.equal(models[0]?.thinking, true);
+	});
+
+	it('mergeConfiguredModels overrides matching IDs and appends missing models', () => {
+		const discovered = buildAutoModels(
+			{ data: [{ id: 'k3' }, { id: 'unchanged' }] },
+			{ enabledModelIds: [], toolLimit: 128 },
+		);
+
+		const models = mergeConfiguredModels(
+			discovered,
+			[
+				{
+					id: 'k3',
+					apiModelId: 'moonshotai/kimi-k3',
+					name: 'Kimi K3',
+					maxInputTokens: 1_048_576,
+					maxOutputTokens: 131_072,
+					thinking: true,
+				},
+				{ id: 'configured-only', toolCalling: false },
+			],
+			64,
+		);
+
+		assert.deepEqual(
+			models.map((model) => model.id),
+			['k3', 'unchanged', 'configured-only'],
+		);
+		assert.equal(models[0]?.name, 'Kimi K3');
+		assert.equal(models[0]?.apiModelId, 'moonshotai/kimi-k3');
+		assert.equal(models[0]?.version, 'moonshotai/kimi-k3');
+		assert.equal(models[0]?.maxInputTokens, 1_048_576);
+		assert.equal(models[0]?.maxOutputTokens, 131_072);
+		assert.equal(models[0]?.thinking, true);
+		assert.equal(models[0]?.toolCalling, 128);
+		assert.equal(models[1]?.maxInputTokens, 128_000);
+		assert.equal(models[2]?.toolCalling, false);
+	});
 });

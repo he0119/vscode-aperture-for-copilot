@@ -19,15 +19,14 @@ afterEach(async () => {
 });
 
 describe('ApertureChatProvider', () => {
-	it('provides manual model information and token counts', async () => {
+	it('provides configured model information and token counts', async () => {
 		await updateApertureConfig({
-			modelSource: 'manual',
 			models: [
 				{
 					id: 'deepseek-v4-pro',
 					apiModelId: 'deepseek-api',
 					name: 'DeepSeek V4 Pro',
-					detail: 'Manual detail',
+					detail: 'Configured detail',
 					maxInputTokens: 1234,
 					maxOutputTokens: 567,
 					toolCalling: 3,
@@ -45,7 +44,7 @@ describe('ApertureChatProvider', () => {
 		assert.equal(info.length, 1);
 		assert.equal(info[0]?.id, 'deepseek-v4-pro');
 		assert.equal(info[0]?.name, 'DeepSeek V4 Pro');
-		assert.equal(info[0]?.detail, 'Manual detail');
+		assert.equal(info[0]?.detail, 'Configured detail');
 		assert.equal(info[0]?.maxInputTokens, 1234);
 		assert.equal(info[0]?.maxOutputTokens, 567);
 		assert.deepEqual(info[0]?.capabilities, {
@@ -80,7 +79,6 @@ describe('ApertureChatProvider', () => {
 	it('builds chat completion requests and reports streamed response parts', async () => {
 		await updateApertureConfig({
 			baseUrl: 'https://aperture.example.com',
-			modelSource: 'manual',
 			models: [
 				{
 					id: 'deepseek-v4-pro',
@@ -176,7 +174,6 @@ describe('ApertureChatProvider', () => {
 
 	it('rejects missing configuration, unavailable models, and excessive tools', async () => {
 		await updateApertureConfig({
-			modelSource: 'manual',
 			models: [{ id: 'model-a', toolCalling: 1 }],
 		});
 		const provider = createProvider();

@@ -5,7 +5,7 @@ import {
 	DEFAULT_TOOL_LIMIT,
 } from '../shared/constants';
 import { normalizeBaseUrl } from './url';
-import type { DebugMode, ManualModelConfig, ModelSource } from './types';
+import type { DebugMode, ModelConfig } from './types';
 
 export function getConfiguredBaseUrl(): string | undefined {
 	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('baseUrl');
@@ -16,11 +16,6 @@ export async function updateConfiguredBaseUrl(value: string | undefined): Promis
 	await vscode.workspace
 		.getConfiguration(CONFIG_SECTION)
 		.update('baseUrl', value ?? '', vscode.ConfigurationTarget.Global);
-}
-
-export function getModelSource(): ModelSource {
-	const value = vscode.workspace.getConfiguration(CONFIG_SECTION).get<string>('modelSource', 'auto');
-	return value === 'manual' ? 'manual' : 'auto';
 }
 
 export function getModelMetadataUrl(): string {
@@ -43,8 +38,8 @@ export function getEnabledModelIds(): string[] {
 		.filter((id) => id.trim().length > 0);
 }
 
-export function getManualModels(): ManualModelConfig[] {
-	return vscode.workspace.getConfiguration(CONFIG_SECTION).get<ManualModelConfig[]>('models', []);
+export function getConfiguredModels(): ModelConfig[] {
+	return vscode.workspace.getConfiguration(CONFIG_SECTION).get<ModelConfig[]>('models', []);
 }
 
 export function getMaxTokens(): number | undefined {

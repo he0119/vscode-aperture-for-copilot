@@ -4,7 +4,6 @@ const CONFIG_SECTION = 'aperture-copilot';
 
 const CONFIG_KEYS = [
 	'baseUrl',
-	'modelSource',
 	'modelMetadataUrl',
 	'enabledModelIds',
 	'models',

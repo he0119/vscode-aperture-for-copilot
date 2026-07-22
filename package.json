@@ -66,19 +66,6 @@
           "default": "",
           "markdownDescription": "Aperture instance URL. The extension appends `/v1` when calling OpenAI-compatible API endpoints. For example, set `https://aperture.example.com`, not `https://aperture.example.com/v1`."
         },
-        "aperture-copilot.modelSource": {
-          "type": "string",
-          "default": "auto",
-          "enum": [
-            "auto",
-            "manual"
-          ],
-          "enumDescriptions": [
-            "Fetch `${baseUrl}/v1/models` and expose the deduplicated result.",
-            "Use only the models configured in `aperture-copilot.models`."
-          ],
-          "description": "Where the extension should get model definitions."
-        },
         "aperture-copilot.modelMetadataUrl": {
           "type": "string",
           "default": "",
@@ -141,7 +128,7 @@
               }
             }
           },
-          "description": "Manual model definitions used when `modelSource` is `manual`."
+          "description": "Model definitions merged with auto-discovered models by ID. Matching IDs override discovered metadata; missing IDs add configured models."
         },
         "aperture-copilot.maxTokens": {
           "type": "number",

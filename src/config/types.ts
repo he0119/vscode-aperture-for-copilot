@@ -1,7 +1,6 @@
-export type ModelSource = 'auto' | 'manual';
 export type DebugMode = 'minimal' | 'metadata' | 'verbose';
 
-export interface ManualModelConfig {
+export interface ModelConfig {
 	id: string;
 	apiModelId?: string;
 	name?: string;
